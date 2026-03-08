@@ -27,8 +27,8 @@ OUTPUT_FILE_PATH = "../backend/db-init/02_initial_pantries_and_hours.sql"
 
 # Template used to insert entries into the pantries table.
 INSERT_PANTRY_TEMPLATE = """
-INSERT INTO pantries (id, url, name, address, city, zip, latitude, longitude, phone, email, eligibility, supported_diets, comments, created_at)
-VALUES ({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+INSERT INTO pantries (id, url, name, address, city, zip, latitude, longitude, phone, email, eligibility, supported_diets, comments)
+VALUES ({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 ON CONFLICT DO NOTHING;
 """
 
@@ -105,7 +105,7 @@ def insert_pantry(
         id, url, name, address,
         city, zip, phone, email,
         eligibility, supported_diets,
-        comments, created_at
+        comments
     )
 
     Params:
@@ -153,7 +153,6 @@ def insert_pantry(
             postgres_prepare_value(eligibility),
             postgres_prepare_value(diets, cast_to_diet_arr=True),
             postgres_prepare_value(comments),
-            postgres_prepare_value(datetime.now()),
         )
     )
     pantry_id += 1
