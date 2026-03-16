@@ -2,8 +2,8 @@ import os
 
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import Mapped
-from datetime import datetime, time
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from enum import Enum
 
 app = Flask(__name__)
@@ -131,8 +131,8 @@ class PantryHours(db.Model):
 def get_pantries():
     zip_code = request.args.get("zip")
     city = request.args.get("city")
-    supported_diet = request.args.get("supported_diet")  # comma-separated
-    eligibility = request.args.get("eligibility")
+    # supported_diet = request.args.get("supported_diet")  # comma-separated
+    # eligibility = request.args.get("eligibility")
     open_now = request.args.get("open_now", type=bool)
 
     query = db.select(Pantries).order_by(Pantries.id)
@@ -141,9 +141,20 @@ def get_pantries():
     if city:
         query = query.filter_by(city=city)
     # if supported_diet:
-    #     for diet in supported_diet:
-    #         query = query.filter(Pantries.supported_diets.any(supported_diet))
-    # if open_now: join PantryHours and filter by current time
+        # for diet in supported_diet:
+        #     query = query.where(Pantries.)
+    if open_now:
+        # Use the current EST time for current time and day of week, in case 
+        # this application is being run from another time zone.
+        current_est_time = datetime.now(ZoneInfo("America/New_York"))
+        current_weekday = list(Weekday)[(current_est_time.weekday() + 1) % 7].value
+        
+        # Match current time in EST time zone to the format of the database
+        formatted_est_time = current_est_time.strftime("%-I:%M:%S %p")
+        query = query.join(PantryHours, Pantries.id == PantryHours.pantry_id) \
+                     .where(PantryHours.day_of_week == current_weekday,
+                            PantryHours.open_time < formatted_est_time,
+                            PantryHours.close_time > formatted_est_time)
 
     results = db.session.execute(query).scalars()
     results = [x.serialize() for x in results.all()]
