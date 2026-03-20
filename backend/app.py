@@ -1,7 +1,9 @@
 import os
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects import postgresql
+from sqlalchemy import or_
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from enum import Enum
@@ -62,8 +64,10 @@ class Pantries(db.Model):
     longitude = db.Column(db.Numeric(15, 13), nullable=False)
     phone = db.Column(db.String(25))
     email = db.Column(db.String(255))
-    eligibility = db.Column(db.ARRAY(db.String(10)))
-    supported_diets = db.Column(db.ARRAY(db.Enum(SupportedDiet, name="supported_diet")))
+    eligibility = db.Column(postgresql.ARRAY(db.String(10)))
+    supported_diets = db.Column(
+        postgresql.ARRAY(db.Enum(SupportedDiet, name="supported_diet"))
+    )
     comments = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.now())
 
@@ -124,6 +128,7 @@ class PantryHours(db.Model):
 # Routes
 # =========================
 
+
 # -------------------------
 # GET /api/pantries
 # -------------------------
@@ -131,33 +136,77 @@ class PantryHours(db.Model):
 def get_pantries():
     zip_code = request.args.get("zip")
     city = request.args.get("city")
-    # supported_diet = request.args.get("supported_diet")  # comma-separated
-    # eligibility = request.args.get("eligibility")
+    supported_diets = request.args.get("supported_diets")
+    eligibility = request.args.get("eligibility")
     open_now = request.args.get("open_now", type=bool)
+    show_unknown = request.args.get("show_unknown", type=bool)
 
     query = db.select(Pantries).order_by(Pantries.id)
     if zip_code:
         query = query.filter_by(zip=zip_code)
+
     if city:
         query = query.filter_by(city=city)
-    # if supported_diet:
-        # for diet in supported_diet:
-        #     query = query.where(Pantries.)
+
+    if supported_diets:
+        # Create comma-separated list, with diets in all caps, matching DB format
+        supported_diets = [x.upper() for x in supported_diets.split(",")]
+
+        # Validate given diet query, since an error will throw if you try to
+        # query an invalid ENUM value
+        invalid_diets = [
+            diet for diet in supported_diets if diet not in SupportedDiet._member_names_
+        ]
+        if len(invalid_diets) > 0:
+            return jsonify(
+                abort(
+                    404,
+                    f"ERROR: given diet(s) {invalid_diets} do not match available choices",
+                )
+            )
+
+        if show_unknown:
+            query = query.where(
+                or_(
+                    Pantries.supported_diets.overlap(["ANY"] + supported_diets),
+                    Pantries.supported_diets == None,
+                )
+            )
+        else:
+            query = query.where(
+                Pantries.supported_diets.overlap(["ANY"] + supported_diets)
+            )
+
+    if eligibility:
+        if show_unknown:
+            query = query.where(
+                or_(
+                    Pantries.eligibility.overlap(["ANY", eligibility]),
+                    Pantries.eligibility == None,
+                )
+            )
+        else:
+            query = query.where(
+                Pantries.eligibility.overlap(["ANY", eligibility]),
+            )
+
     if open_now:
-        # Use the current EST time for current time and day of week, in case 
+        # Use the current EST time for current time and day of week, in case
         # this application is being run from another time zone.
         current_est_time = datetime.now(ZoneInfo("America/New_York"))
         current_weekday = list(Weekday)[(current_est_time.weekday() + 1) % 7].value
-        
-        # Match current time in EST time zone to the format of the database
-        formatted_est_time = current_est_time.strftime("%-I:%M:%S %p")
-        query = query.join(PantryHours, Pantries.id == PantryHours.pantry_id) \
-                     .where(PantryHours.day_of_week == current_weekday,
-                            PantryHours.open_time < formatted_est_time,
-                            PantryHours.close_time > formatted_est_time)
 
-    results = db.session.execute(query).scalars()
-    results = [x.serialize() for x in results.all()]
+        # Match current time in EST time zone to the format of the database
+        # (e.g. "6:00:00 PM", not "18:00:00")
+        formatted_est_time = current_est_time.strftime("%-I:%M:%S %p")
+        query = query.join(PantryHours, Pantries.id == PantryHours.pantry_id).where(
+            PantryHours.day_of_week == current_weekday,
+            PantryHours.open_time < formatted_est_time,
+            PantryHours.close_time > formatted_est_time,
+        )
+
+    results = db.session.execute(query).scalars().all()
+    results = [x.serialize() for x in results]
     return jsonify(results)
 
 
@@ -177,7 +226,7 @@ def get_pantry_by_id(pantry_id):
 @app.route("/api/pantries/<int:pantry_id>/hours", methods=["GET"])
 def get_pantry_hours(pantry_id):
     query = db.select(PantryHours).filter_by(pantry_id=pantry_id)
-    hours = db.session.execute(query).scalars()
+    hours = db.session.execute(query).scalars().all()
     hours = [h.serialize() for h in hours]
     return jsonify(hours)
 
