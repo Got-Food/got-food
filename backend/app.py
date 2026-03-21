@@ -3,6 +3,7 @@ import os
 from flask import Flask, request, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.orm import relationship
 from sqlalchemy import or_
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -70,10 +71,16 @@ class Pantries(db.Model):
     )
     comments = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.now())
+    hours = relationship("PantryHours")
 
     def serialize(self):
-        if self.supported_diets is not None:
-            self.supported_diets = [x.serialize() for x in self.supported_diets]
+        diets = (
+            [x.serialize() for x in self.supported_diets]
+            if self.supported_diets is not None
+            else None
+        )
+
+        hrs = [h.serialize() for h in self.hours] if self.hours is not None else None
 
         return {
             "id": self.id,
@@ -87,9 +94,10 @@ class Pantries(db.Model):
             "phone": self.phone,
             "email": self.email,
             "eligibility": self.eligibility,
-            "supported_diets": self.supported_diets,
+            "supported_diets": diets,
             "comments": self.comments,
             "created_at": self.created_at,
+            "hours": hrs,
         }
 
 
@@ -109,18 +117,22 @@ class PantryHours(db.Model):
 
     def serialize(self):
         # Convert times to readable 12-hr AM/PM times
-        if self.open_time is not None:
-            self.open_time = self.open_time.strftime("%-I:%M %p")
-        if self.close_time is not None:
-            self.close_time = self.close_time.strftime("%-I:%M %p")
+        open_time = (
+            self.open_time.strftime("%-I:%M %p") if self.open_time is not None else None
+        )
+        close_time = (
+            self.close_time.strftime("%-I:%M %p")
+            if self.close_time is not None
+            else None
+        )
 
         return {
             "id": self.id,
             "pantry_id": self.pantry_id,
             "day_of_week": self.day_of_week.name,
             "status": self.status.name,
-            "open_time": self.open_time,
-            "close_time": self.close_time,
+            "open_time": open_time,
+            "close_time": close_time,
         }
 
 
@@ -131,16 +143,20 @@ class PantryHours(db.Model):
 
 # -------------------------
 # GET /api/pantries
+# Gets all pantry information. Supports URL query parameters
+# for filtering.
 # -------------------------
 @app.route("/api/pantries", methods=["GET"])
 def get_pantries():
+    # URL Query parameters
     zip_code = request.args.get("zip")
     city = request.args.get("city")
     supported_diets = request.args.get("supported_diets")
     eligibility = request.args.get("eligibility")
-    open_now = True if "open_now" in request.args else None
-    show_unknown = True if "show_unknown" in request.args else None
+    open_now = request.args.get("open_now", type=bool)
+    show_unknown = request.args.get("show_unknown", type=bool)
 
+    # Actual query construction
     query = db.select(Pantries).order_by(Pantries.id)
     if zip_code:
         query = query.filter_by(zip=zip_code)
@@ -220,6 +236,7 @@ def get_pantries():
 
 # -------------------------
 # GET /api/pantries/<id>
+# Gets all information associated with a specific pantry ID.
 # -------------------------
 @app.route("/api/pantries/<int:pantry_id>", methods=["GET"])
 def get_pantry_by_id(pantry_id):
@@ -230,6 +247,7 @@ def get_pantry_by_id(pantry_id):
 
 # -------------------------
 # GET /api/pantries/<id>/hours
+# Gets only a specific pantry's hours by ID.
 # -------------------------
 @app.route("/api/pantries/<int:pantry_id>/hours", methods=["GET"])
 def get_pantry_hours(pantry_id):
