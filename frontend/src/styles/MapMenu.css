@@ -1,0 +1,46 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
+
+.map-menu-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  width: 66%;
+  overflow: hidden;
+  margin-left: auto;
+}
+
+.map-menu-header {
+  padding: 18px 20px 14px;
+}
+
+.map-menu-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 500;
+  color: #111827;
+  letter-spacing: -0.2px;
+}
+
+.map-menu-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 0 0 4px;
+}
+
+.map-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px 14px;
+  overflow-y: auto;
+  max-height: 25vw;
+}
+
+.map-menu-list::-webkit-scrollbar {
+  display: none;
+}
+
+.map-menu-list {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

@@ -11,7 +11,7 @@ function Header() {
         </div>
 
         <h1 className="header-title">
-          Food Resources in the Northern Virginia Area
+          Hokie Food Resources in Northern Virginia
         </h1>
 
         <div className="header-right">
