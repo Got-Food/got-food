@@ -5,7 +5,7 @@ import "../styles/MenuItem.css";
 import { getPantryStatus } from "../utils/get_pantry_status";
 import { PantryInfoModal } from "./PantryInfoModal";
 
-export function MenuItem({ details }) {
+export function MenuItem({ details, flash }) {
   const status = getPantryStatus(details.hours);
   const statusLabel =
     { open: "Open", closed: "Closed", varied: "Varied hours" }[status] ??
@@ -18,7 +18,8 @@ export function MenuItem({ details }) {
   return (
     <>
       <div
-        className={`menu-item${active ? " active" : ""}`}
+        id={`pantry-${details.id}`}
+        className={`menu-item${active ? " active" : ""}${flash ? " flash" : ""}`}
         onMouseDown={() => setActive(true)}
         onMouseUp={() => setActive(false)}
         onMouseLeave={() => setActive(false)}

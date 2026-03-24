@@ -9,6 +9,7 @@ import { getAllPantries } from "../utils/api_requests";
 function SearchPage() {
   const [pantries, setPantries] = useState([]);
   const [selectedPantry, setSelectedPantry] = useState(null);
+  const [pantrySelection, setPantrySelection] = useState(null);
 
   useEffect(() => {
     getAllPantries().then((data) => {
@@ -41,9 +42,18 @@ function SearchPage() {
       >
         <Menu
           items={pantries}
-          onSelectPantry={(pantry) => setSelectedPantry(pantry)}
+          onSelectPantry={setSelectedPantry}
+          pantrySelection={pantrySelection}
         />
-        <Map selectedPantry={selectedPantry} />
+        <Map
+          selectedPantry={selectedPantry}
+          onSelectPantry={(id) =>
+            setPantrySelection((prev) => ({
+              id,
+              count: (prev?.count ?? 0) + 1,
+            }))
+          }
+        />
         <Filter />
       </main>
     </div>

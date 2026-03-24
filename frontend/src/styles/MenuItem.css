@@ -91,3 +91,22 @@
 .menu-item-info-btn:hover .menu-item-info-icon {
   color: #6b7280;
 }
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 0px rgba(202, 79, 0, 0);
+    background: #ffffff !important;
+  }
+  40% {
+    box-shadow: 0 0 12px rgba(202, 79, 0, 0.6);
+    background: #fff3e0 !important;
+  }
+  100% {
+    box-shadow: 0 0 0px rgba(202, 79, 0, 0);
+    background: #ffffff !important;
+  }
+}
+
+.menu-item.flash {
+  animation: glow 1s ease-out forwards;
+}

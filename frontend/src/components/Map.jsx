@@ -37,7 +37,7 @@ function FlyToMarker({ selectedPantry }) {
   return null;
 }
 
-function DisplayMap({ selectedPantry }) {
+function DisplayMap({ selectedPantry, onSelectPantry }) {
   const [pantryLocations, setPantryLocations] = useState([]);
   const [openPantries, setOpenPantries] = useState([]);
   useEffect(() => {
@@ -85,7 +85,16 @@ function DisplayMap({ selectedPantry }) {
         />
         <FlyToMarker selectedPantry={selectedPantry} />
         {pantryLocations.map((loc, index) => (
-          <Marker key={index} position={loc.position}>
+          <Marker
+            key={index}
+            position={loc.position}
+            eventHandlers={{
+              click: () => {
+                console.log("Marker clicked:", loc.id);
+                onSelectPantry?.(loc.id);
+              },
+            }}
+          >
             <Popup maxWidth={420} maxHeight={550}>
               {PopupText(loc, openPantries)}
             </Popup>
