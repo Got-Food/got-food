@@ -13,11 +13,7 @@ export function MapMenu({ items = [] }) {
 
       <div className="map-menu-list">
         {items.map((item) => (
-          <MenuItem
-            key={item.id}
-            title={item.title}
-            description={item.description}
-          />
+          <MenuItem key={item.id} details={item} />
         ))}
       </div>
     </div>

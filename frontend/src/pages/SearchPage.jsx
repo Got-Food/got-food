@@ -11,12 +11,9 @@ function SearchPage() {
 
   useEffect(() => {
     getAllPantries().then((data) => {
+      console.log("Raw API response:", data);
       if (!data) return;
-      const items = data.map((pantry) => ({
-        id: pantry.id,
-        title: pantry.name,
-        isOpen: pantry.is_open,
-      }));
+      const items = data.map((pantry) => pantry);
       setPantries(items);
     });
   }, []);

@@ -42,6 +42,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1;
 }
 
 .menu-item-title {
@@ -65,4 +66,28 @@
 
 .menu-item-status.closed {
   color: #dc2626;
+}
+
+.menu-item-status.varied {
+  color: orange;
+}
+
+.menu-item-info-btn {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  margin-top: 1px;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+.menu-item-info-icon {
+  font-size: 20px;
+  color: #9ca3af;
+  transition: color 0.2s ease;
+}
+
+.menu-item-info-btn:hover .menu-item-info-icon {
+  color: #6b7280;
 }

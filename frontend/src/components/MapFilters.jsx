@@ -7,9 +7,17 @@ const MapFilters = ({ onSearch }) => {
   const [halal, setHalal] = useState(false);
   const [residentialZip, setResidentialZip] = useState("");
   const [showOpen, setShowOpen] = useState(false);
+  const [noShowVaried, setNoShowVaried] = useState(false);
 
   const handleSearch = () => {
-    onSearch({ searchLocation, kosher, halal, residentialZip, showOpen });
+    onSearch({
+      searchLocation,
+      kosher,
+      halal,
+      residentialZip,
+      showOpen,
+      noShowVaried,
+    });
   };
 
   return (
@@ -120,6 +128,34 @@ const MapFilters = ({ onSearch }) => {
             )}
           </span>
           <span className="filter-checkbox-text">Only Show Currently Open</span>
+        </label>
+      </div>
+      <div className="filter-section">
+        <label className="filter-checkbox-label">
+          <input
+            type="checkbox"
+            checked={noShowVaried}
+            onChange={(e) => setNoShowVaried(e.target.checked)}
+            className="filter-checkbox-input"
+          />
+          <span
+            className={`filter-custom-checkbox${noShowVaried ? " checked" : ""}`}
+          >
+            {noShowVaried && (
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                <path
+                  d="M2 6l3 3 5-5"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </span>
+          <span className="filter-checkbox-text">
+            Exclude Pantries With Varied Hours
+          </span>
         </label>
       </div>
 
