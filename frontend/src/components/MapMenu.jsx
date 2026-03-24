@@ -2,7 +2,7 @@ import "../styles/MapMenu.css";
 
 import { MenuItem } from "./MenuItem";
 
-export function MapMenu({ items = [] }) {
+export function MapMenu({ items = [], onSelectPantry }) {
   return (
     <div className="map-menu-card">
       <div className="map-menu-header">
@@ -13,7 +13,14 @@ export function MapMenu({ items = [] }) {
 
       <div className="map-menu-list">
         {items.map((item) => (
-          <MenuItem key={item.id} details={item} />
+          <div
+            key={item.id}
+            onClick={() => {
+              onSelectPantry?.(item);
+            }}
+          >
+            <MenuItem details={item} />
+          </div>
         ))}
       </div>
     </div>

@@ -8,6 +8,7 @@ import { getAllPantries } from "../utils/api_requests";
 
 function SearchPage() {
   const [pantries, setPantries] = useState([]);
+  const [selectedPantry, setSelectedPantry] = useState(null);
 
   useEffect(() => {
     getAllPantries().then((data) => {
@@ -38,8 +39,11 @@ function SearchPage() {
           alignItems: "start",
         }}
       >
-        <Menu items={pantries} />
-        <Map />
+        <Menu
+          items={pantries}
+          onSelectPantry={(pantry) => setSelectedPantry(pantry)}
+        />
+        <Map selectedPantry={selectedPantry} />
         <Filter />
       </main>
     </div>
