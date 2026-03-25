@@ -30,6 +30,7 @@ const MapFilters = ({ onSearch }) => {
           type="text"
           value={searchLocation}
           onChange={(e) => setSearchLocation(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           placeholder="Address, zipcodes..."
           className="filter-search-input"
         />
@@ -96,7 +97,11 @@ const MapFilters = ({ onSearch }) => {
         <input
           type="text"
           value={residentialZip}
-          onChange={(e) => setResidentialZip(e.target.value)}
+          onChange={(e) => {
+            // Remove any non-digit characters and limit length to 5
+            const onlyNumbers = e.target.value.replace(/\D/g, "").slice(0, 5);
+            setResidentialZip(onlyNumbers);
+          }}
           placeholder="Zipcode..."
           className="filter-text-input"
         />

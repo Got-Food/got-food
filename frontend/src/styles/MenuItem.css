@@ -15,7 +15,7 @@
 }
 
 .menu-item.active {
-  background: #f0fdf4;
+  background: #fdfbf0;
 }
 
 .menu-item-star-btn {
@@ -35,7 +35,7 @@
 }
 
 .menu-item-star-btn.starred .menu-item-star-icon {
-  color: #f59e0b;
+  color: #f5610b;
 }
 
 .menu-item-text {
@@ -94,16 +94,13 @@
 
 @keyframes glow {
   0% {
-    box-shadow: 0 0 0px rgba(202, 79, 0, 0);
-    background: #ffffff !important;
+    background: #ffffff;
   }
   40% {
-    box-shadow: 0 0 12px rgba(202, 79, 0, 0.6);
-    background: #fff3e0 !important;
+    background: #fff3e0;
   }
   100% {
-    box-shadow: 0 0 0px rgba(202, 79, 0, 0);
-    background: #ffffff !important;
+    background: #ffffff;
   }
 }
 
