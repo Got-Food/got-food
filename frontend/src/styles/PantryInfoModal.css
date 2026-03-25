@@ -1,50 +1,167 @@
-.menu-item-modal {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  max-width: 700px;
-  width: 90%;
-  max-height: 70vh;
-  overflow-x: hidden;
-  overflow-y: auto;
-  position: relative;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-  scrollbar-width: none;
-}
-
-.menu-item-modal::-webkit-scrollbar {
-  display: none;
-}
-
-.menu-item-modal pre {
-  white-space: pre-wrap;
-  word-break: break-word;
-  color: #111827;
-  font-size: 13px;
-  margin: 0;
-}
-
-.menu-item-modal-overlay {
+/* Overlay */
+.pantry-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 1rem;
 }
 
-.menu-item-modal-close {
-  position: absolute;
-  top: 12px;
-  right: 16px;
-  background: none;
+/* Modal container */
+.pantry-modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 480px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.pantry-modal::-webkit-scrollbar {
+  display: none;
+}
+
+/* Close button */
+.pantry-modal-close {
+  position: sticky;
+  top: 0;
+  float: right;
+  margin: -0.5rem -0.5rem 0 0;
+  background: #fff;
   border: none;
-  font-size: 18px;
+  font-size: 1.1rem;
   cursor: pointer;
+  color: #666;
+  line-height: 1;
+  padding: 0.25rem 0.4rem;
+  border-radius: 4px;
+  transition: background 0.15s;
+  z-index: 10;
+}
+.pantry-modal-close:hover {
+  background: #f0f0f0;
+  color: #222;
+}
+
+/* Name */
+.pantry-modal-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 1.1rem 0;
+  color: #1a1a1a;
+  line-height: 1.25;
+  padding-right: 2rem;
+}
+
+/* Body sections */
+.pantry-modal-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.pantry-modal-section {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.6rem;
+  border-top: 1px solid #f0f0f0;
+  padding: 0.85rem 0;
+}
+
+/* Icon label */
+.pantry-modal-icon {
+  display: flex;
+  align-items: center;
+  color: #888;
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.pantry-location-line {
+  display: block;
+}
+
+.pantry-modal-value {
+  font-size: 0.95rem;
+  color: #222;
+  line-height: 1.5;
+}
+
+.pantry-modal-comments {
+  color: #444;
+}
+
+.pantry-modal-link {
+  font-size: 0.95rem;
+  color: #2563eb;
+  text-decoration: none;
+  word-break: break-all;
+}
+.pantry-modal-link:hover {
+  text-decoration: underline;
+}
+
+.pantry-modal-section--hours {
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pantry-hours-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.pantry-status-text {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.status-open {
+  color: #16a34a;
+}
+.status-closed {
+  color: #dc2626;
+}
+.status-varied {
+  color: orange;
+}
+.status-unknown {
   color: #6b7280;
 }
 
-.menu-item-modal-close:hover {
-  color: #111827;
+.pantry-hours-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+}
+
+.pantry-hours-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  padding: 0.2rem 0;
+  color: #444;
+}
+
+.pantry-hours-today {
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.pantry-hours-day {
+  min-width: 100px;
+}
+
+.pantry-hours-time {
+  text-align: right;
 }

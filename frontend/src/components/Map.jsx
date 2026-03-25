@@ -71,7 +71,7 @@ function DisplayMap({ selectedPantry, onSelectPantry }) {
     <div style={{ width: "30vw", height: "30vw" }}>
       <MapContainer
         center={pantryLocations[0].position}
-        zoom={13}
+        zoom={14}
         scrollWheelZoom={true}
         style={{ height: "100%", width: "100%" }}
         whenReady={(map) => {

@@ -8,7 +8,7 @@ import { PantryInfoModal } from "./PantryInfoModal";
 export function MenuItem({ details, flash }) {
   const status = getPantryStatus(details.hours);
   const statusLabel =
-    { open: "Open", closed: "Closed", varied: "Varied hours" }[status] ??
+    { open: "Open", closed: "Closed", varied: "Hours Varied" }[status] ??
     "Closed";
 
   const [starred, setStarred] = useState(false);
