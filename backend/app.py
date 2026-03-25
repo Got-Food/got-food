@@ -184,7 +184,7 @@ def get_pantries():
         if show_unknown:
             query = query.where(
                 or_(
-                    Pantries.supported_diets.overlap(["ANY", "ANY (VA)"] + supported_diets),
+                    Pantries.supported_diets.overlap(["ANY"] + supported_diets),
                     Pantries.supported_diets == None,
                 )
             )

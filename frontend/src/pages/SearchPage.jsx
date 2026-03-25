@@ -22,51 +22,54 @@ function SearchPage() {
 
   const handleSearch = ({
     searchLocation,
+    kosher,
+    halal,
     showOpen,
     noShowVaried,
     residentialZip,
   }) => {
-    getPantries(false, residentialZip || undefined, undefined, true).then(
-      (data) => {
-        if (!data) return;
+    const diets = [];
+    if (kosher) diets.push("KOSHER");
+    if (halal) diets.push("HALAL");
+    getPantries(
+      false,
+      residentialZip || undefined,
+      diets.length > 0 ? diets : undefined,
+      true,
+    ).then((data) => {
+      if (!data) return;
 
-        let filtered = data;
+      let filtered = data;
 
-        if (showOpen) {
-          filtered = filtered.filter(
-            (pantry) => getPantryStatus(pantry.hours) === "open",
-          );
-        }
+      if (showOpen) {
+        filtered = filtered.filter(
+          (pantry) => getPantryStatus(pantry.hours) === "open",
+        );
+      }
 
-        if (noShowVaried) {
-          filtered = filtered.filter(
-            (pantry) => getPantryStatus(pantry.hours) !== "varied",
-          );
-        }
+      if (noShowVaried) {
+        filtered = filtered.filter(
+          (pantry) => getPantryStatus(pantry.hours) !== "varied",
+        );
+      }
 
-        if (searchLocation) {
-          const tokens = searchLocation
-            .toLowerCase()
-            .split(/\s+/)
-            .filter((t) => /[a-z0-9]/.test(t));
+      if (searchLocation) {
+        const tokens = searchLocation
+          .toLowerCase()
+          .split(/\s+/)
+          .filter((t) => /[a-z0-9]/.test(t));
 
-          filtered = filtered.filter((pantry) => {
-            const fields = [
-              pantry.name,
-              pantry.address,
-              pantry.city,
-              pantry.zip,
-            ]
-              .filter(Boolean)
-              .join(" ")
-              .toLowerCase();
-            return tokens.every((token) => fields.includes(token));
-          });
-        }
+        filtered = filtered.filter((pantry) => {
+          const fields = [pantry.name, pantry.address, pantry.city, pantry.zip]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+          return tokens.every((token) => fields.includes(token));
+        });
+      }
 
-        setPantries(filtered);
-      },
-    );
+      setPantries(filtered);
+    });
   };
 
   return (
