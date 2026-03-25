@@ -60,6 +60,7 @@ class Pantries(db.Model):
     name = db.Column(db.String(255), nullable=False)
     address = db.Column(db.String(255), nullable=False)
     city = db.Column(db.String(100), nullable=False)
+    state = db.Column(db.String(2), nullable=False)
     zip = db.Column(db.String(10), nullable=False)
     latitude = db.Column(db.Numeric(15, 13), nullable=False)
     longitude = db.Column(db.Numeric(15, 13), nullable=False)
@@ -71,6 +72,7 @@ class Pantries(db.Model):
     )
     comments = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.now())
+    has_variable_hours = db.Column(db.Boolean, nullable=False)
     hours = relationship("PantryHours")
 
     def serialize(self):
@@ -88,6 +90,7 @@ class Pantries(db.Model):
             "name": self.name,
             "address": self.address,
             "city": self.city,
+            "state": self.state,
             "zip": self.zip,
             "latitude": self.latitude,
             "longitude": self.longitude,
@@ -97,6 +100,7 @@ class Pantries(db.Model):
             "supported_diets": diets,
             "comments": self.comments,
             "created_at": self.created_at,
+            "has_variable_hours" : self.has_variable_hours,
             "hours": hrs,
         }
 
@@ -154,6 +158,7 @@ def get_pantries():
     supported_diets = request.args.get("supported_diets")
     eligibility = request.args.get("eligibility")
     open_now = request.args.get("open_now", type=bool)
+    varied_only = request.args.get("varied_only", type=bool)
     show_unknown = request.args.get("show_unknown", type=bool)
 
     # Actual query construction
@@ -227,6 +232,11 @@ def get_pantries():
                 PantryHours.close_time == None,
                 PantryHours.close_time > formatted_est_time,
             ),
+        )
+
+    if varied_only:
+        query = query.where(
+            Pantries.has_variable_hours == True
         )
 
     results = db.session.execute(query).scalars().all()
