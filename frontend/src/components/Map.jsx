@@ -89,15 +89,15 @@ function DisplayMap({ selectedPantry, onSelectPantry }) {
             key={index}
             position={loc.position}
             eventHandlers={{
-              click: () => {
-                console.log("Marker clicked:", loc.id);
+              click: (e) => {
+                e.target._map.flyTo(loc.position, 13, { duration: 1.2 });
                 onSelectPantry?.(loc.id);
               },
             }}
           >
-            <Popup maxWidth={420} maxHeight={550}>
+            {/* <Popup maxWidth={420} maxHeight={550}>
               {PopupText(loc, openPantries)}
-            </Popup>
+            </Popup> */}
           </Marker>
         ))}
       </MapContainer>
