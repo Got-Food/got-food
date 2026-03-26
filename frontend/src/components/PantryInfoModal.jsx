@@ -19,8 +19,18 @@ const DAYS_ORDER = [
 export function PantryInfoModal({ details, onClose }) {
   if (!details) return null;
 
-  const { name, address, city, zip, url, phone, email, comments, hours } =
-    details;
+  const {
+    name,
+    address,
+    city,
+    zip,
+    url,
+    phone,
+    email,
+    comments,
+    hours,
+    state,
+  } = details;
 
   const status = getPantryStatus(hours);
 
@@ -64,8 +74,7 @@ export function PantryInfoModal({ details, onClose }) {
             <span className="pantry-modal-value">
               <span className="pantry-location-line">{address}</span>
               <span className="pantry-location-line">
-                {city}
-                {/* , {state} */}, {zip}
+                {city}, {state}, {zip}
               </span>
             </span>
           </div>
