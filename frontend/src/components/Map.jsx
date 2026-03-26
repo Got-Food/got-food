@@ -32,7 +32,10 @@ function FlyToMarker({ selectedPantry }) {
 }
 
 function DisplayMap({ pantries, selectedPantry, onSelectPantry }) {
-  const pantryLocations = pantries.map((p) => ({
+  const DEFAULT_CENTER = [38.8462, -77.3064];
+  const DEFAULT_ZOOM = 12;
+
+  const pantryLocations = (pantries ?? []).map((p) => ({
     id: p.id,
     position: [p.latitude, p.longitude],
     name: p.name,
@@ -44,18 +47,20 @@ function DisplayMap({ pantries, selectedPantry, onSelectPantry }) {
     hours: p.hours,
   }));
 
-  if (pantryLocations.length === 0) return <>Loading...</>;
-
   return (
     <div style={{ width: "30vw", height: "30vw" }}>
       <MapContainer
-        center={pantryLocations[0].position}
-        zoom={14}
+        center={DEFAULT_CENTER}
+        zoom={DEFAULT_ZOOM}
         scrollWheelZoom={true}
         style={{ height: "100%", width: "100%" }}
         whenReady={(map) => {
-          const bounds = pantryLocations.map((loc) => loc.position);
-          map.target.fitBounds(bounds, { padding: [10, 10] });
+          if (pantryLocations.length > 0) {
+            map.target.fitBounds(
+              pantryLocations.map((loc) => loc.position),
+              { padding: [10, 10] },
+            );
+          }
         }}
       >
         <TileLayer
@@ -73,11 +78,7 @@ function DisplayMap({ pantries, selectedPantry, onSelectPantry }) {
                 onSelectPantry?.(loc.id);
               },
             }}
-          >
-            {/* <Popup maxWidth={420} maxHeight={550}>
-              {PopupText(loc)}
-            </Popup> */}
-          </Marker>
+          ></Marker>
         ))}
       </MapContainer>
     </div>
