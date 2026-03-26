@@ -1,0 +1,7 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY backend/docker_requirements.txt tests/backend/requirements.test.txt ./
+RUN pip install --no-cache-dir -r docker_requirements.txt -r requirements.test.txt
+COPY backend/app.py tests/backend/test_app.py ./
+EXPOSE 5001
+CMD ["python", "test_app.py"]
