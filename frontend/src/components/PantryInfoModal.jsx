@@ -1,6 +1,6 @@
 import { createPortal } from "react-dom";
 import "../styles/PantryInfoModal.css";
-import { getPantryStatus } from "../utils/get_pantry_status";
+import { getCurrentDay } from "../utils/get_current_day";
 import { MdEmail, MdPhone } from "react-icons/md";
 import { HiOutlineLocationMarker } from "react-icons/hi";
 import { IoLink } from "react-icons/io5";
@@ -30,20 +30,17 @@ export function PantryInfoModal({ details, onClose }) {
     comments,
     hours,
     state,
+    has_variable_hours,
   } = details;
 
-  const status = getPantryStatus(hours);
-
-  const today = new Date();
-  const todayName = [
-    "SUNDAY",
-    "MONDAY",
-    "TUESDAY",
-    "WEDNESDAY",
-    "THURSDAY",
-    "FRIDAY",
-    "SATURDAY",
-  ][today.getDay()];
+  const todayName = getCurrentDay();
+  const todayHours = hours?.find((h) => h.day_of_week === todayName);
+  const status =
+    !todayHours || todayHours.status === "CLOSED"
+      ? "closed"
+      : has_variable_hours
+        ? "varied"
+        : "open";
 
   const sortedHours = DAYS_ORDER.map((day) =>
     hours?.find((h) => h.day_of_week === day),

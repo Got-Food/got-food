@@ -16,7 +16,7 @@
  * specify true, else false.
  * @param {boolean} variedOnly - Whether or not you want the API call to only
  * return pantries that have variable hours, based on its database entry.
- * 
+ *
  * @returns {Object} The result of the query.
  */
 export async function getPantries(
@@ -124,7 +124,7 @@ export async function getPantriesOpenNow() {
  * Obtains a JSON object containing all pantry entries that have variable hours.
  * Note that this does not account for whether or not they should be currently
  * considered open or closed; it solely looks at their database entry.
- * 
+ *
  * @returns {Object} A JSON object containing all pantries with variable hours,
  * no matter if they are open or closed at the moment.
  */

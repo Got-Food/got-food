@@ -5,7 +5,7 @@ import Map from "../components/Map";
 import Filter from "../components/MapFilters";
 import Menu from "../components/MapMenu";
 import { getAllPantries, getPantries } from "../utils/api_requests";
-import { getPantryStatus } from "../utils/get_pantry_status";
+import { STATE_NAMES } from "../utils/state_names";
 
 function SearchPage() {
   const [pantries, setPantries] = useState([]);
@@ -31,8 +31,9 @@ function SearchPage() {
     const diets = [];
     if (kosher) diets.push("KOSHER");
     if (halal) diets.push("HALAL");
+
     getPantries(
-      false,
+      showOpen,
       residentialZip || undefined,
       diets.length > 0 ? diets : undefined,
       true,
@@ -41,16 +42,8 @@ function SearchPage() {
 
       let filtered = data;
 
-      if (showOpen) {
-        filtered = filtered.filter(
-          (pantry) => getPantryStatus(pantry.hours) === "open",
-        );
-      }
-
       if (noShowVaried) {
-        filtered = filtered.filter(
-          (pantry) => getPantryStatus(pantry.hours) !== "varied",
-        );
+        filtered = filtered.filter((p) => !p.has_variable_hours);
       }
 
       if (searchLocation) {
@@ -58,16 +51,15 @@ function SearchPage() {
           .toLowerCase()
           .split(/\s+/)
           .filter((t) => /[a-z0-9]/.test(t));
-
-        filtered = filtered.filter((pantry) => {
-          const fields = [pantry.name, pantry.address, pantry.city, pantry.zip]
+        filtered = filtered.filter((p) => {
+          const stateName = STATE_NAMES[p.state] ?? "";
+          const fields = [p.name, p.address, p.city, p.zip, p.state, stateName]
             .filter(Boolean)
             .join(" ")
             .toLowerCase();
           return tokens.every((token) => fields.includes(token));
         });
       }
-
       setPantries(filtered);
     });
   };

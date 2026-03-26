@@ -7,7 +7,7 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
-import { getPantryStatus } from "../utils/get_pantry_status"
+import { getCurrentDay } from "../utils/get_current_day";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -18,19 +18,28 @@ L.Icon.Default.mergeOptions({
 
 const STATUS_ICONS = {
   open: new L.Icon({
-    iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
+    iconUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
     shadowUrl: markerShadow,
-    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34],
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
   }),
   closed: new L.Icon({
-    iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+    iconUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
     shadowUrl: markerShadow,
-    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34],
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
   }),
   varied: new L.Icon({
-    iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png",
+    iconUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png",
     shadowUrl: markerShadow,
-    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34],
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
   }),
 };
 
@@ -65,7 +74,10 @@ function DisplayMap({ pantries, selectedPantry, onSelectPantry }) {
     email: p.email,
     comments: p.comments,
     hours: p.hours,
+    has_variable_hours: p.has_variable_hours,
   }));
+
+  const todayName = getCurrentDay();
 
   return (
     <div style={{ width: "30vw", height: "30vw" }}>
@@ -89,7 +101,15 @@ function DisplayMap({ pantries, selectedPantry, onSelectPantry }) {
         />
         <FlyToMarker selectedPantry={selectedPantry} />
         {pantryLocations.map((loc, index) => {
-          const status = getPantryStatus(loc.hours);
+          const todayHours = loc.hours?.find(
+            (h) => h.day_of_week === todayName,
+          );
+          const status =
+            !todayHours || todayHours.status === "CLOSED"
+              ? "closed"
+              : loc.has_variable_hours
+                ? "varied"
+                : "open";
           const icon = STATUS_ICONS[status] ?? STATUS_ICONS.closed;
 
           return (

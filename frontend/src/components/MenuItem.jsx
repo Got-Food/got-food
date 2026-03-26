@@ -2,11 +2,18 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleQuestion } from "@fortawesome/free-solid-svg-icons";
 import "../styles/MenuItem.css";
-import { getPantryStatus } from "../utils/get_pantry_status";
+import { getCurrentDay } from "../utils/get_current_day";
 import { PantryInfoModal } from "./PantryInfoModal";
 
 export function MenuItem({ details, flash }) {
-  const status = getPantryStatus(details.hours);
+  const today = getCurrentDay();
+  const todayHours = details.hours?.find((h) => h.day_of_week === today);
+  const status =
+    !todayHours || todayHours.status === "CLOSED"
+      ? "closed"
+      : details.has_variable_hours
+        ? "varied"
+        : "open";
   const statusLabel =
     { open: "Open", closed: "Closed", varied: "Hours Varied" }[status] ??
     "Closed";
