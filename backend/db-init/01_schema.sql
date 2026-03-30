@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS pantries (
     state VARCHAR(2) NOT NULL,   
     zip VARCHAR(10) NOT NULL,
     latitude NUMERIC(15, 13) NOT NULL, 
-    longitude NUMERIC(15, 13) NOT NULL,  
+    longitude NUMERIC(16, 13) NOT NULL,  
     phone VARCHAR(25),   
     email VARCHAR(255),   
     eligibility VARCHAR(10)[],   

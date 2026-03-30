@@ -4,6 +4,8 @@ from flask import Flask, request, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship
+from sqlalchemy.exc import IntegrityError, DataError
+from psycopg2 import errors
 from sqlalchemy import or_
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -100,7 +102,7 @@ class Pantries(db.Model):
             "supported_diets": diets,
             "comments": self.comments,
             "created_at": self.created_at,
-            "has_variable_hours" : self.has_variable_hours,
+            "has_variable_hours": self.has_variable_hours,
             "hours": hrs,
         }
 
@@ -235,13 +237,46 @@ def get_pantries():
         )
 
     if varied_only:
-        query = query.where(
-            Pantries.has_variable_hours == True
-        )
+        query = query.where(Pantries.has_variable_hours == True)
 
     results = db.session.execute(query).scalars().all()
     results = [x.serialize() for x in results]
     return jsonify(results)
+
+
+# -------------------------
+# POST /api/pantries
+# Creates a new pantry entry in the Pantries table.
+# -------------------------
+@app.route("/api/pantries", methods=["POST"])
+def post_pantries():
+    pantry = Pantries(
+        url=request.form.get("url"),
+        name=request.form.get("name"),
+        address=request.form.get("address"),
+        city=request.form.get("city"),
+        state=request.form.get("state"),
+        zip=request.form.get("zip"),
+        latitude=request.form.get("latitude", type=float),
+        longitude=request.form.get("longitude", type=float),
+        phone=request.form.get("phone"),
+        email=request.form.get("email"),
+        eligibility=request.form.get("eligibility"),
+        supported_diets=request.form.get("supported_diets"),
+        comments=request.form.get("comments"),
+        has_variable_hours=request.form.get("has_variable_hours", type=bool),
+    )
+
+    try:
+        db.session.add(pantry)
+        res = db.session.commit()
+    except (IntegrityError, DataError) as e:
+        db.session.rollback()
+        res = {"error_type": type(e).__name__, "message": str(e)}
+        print("\n\n\n" + str(res) + "\n\n\n", flush=True)
+        return res, 400
+    print("\n\n\n" + str(res) + "\n\n\n", flush=True)
+    return res, 201
 
 
 # -------------------------
@@ -265,6 +300,94 @@ def get_pantry_hours(pantry_id):
     hours = db.session.execute(query).scalars().all()
     hours = [h.serialize() for h in hours]
     return jsonify(hours)
+
+
+# -------------------------
+# POST /api/pantries/<id>/hours
+# Creates an entry into table pantry_hours.
+# -------------------------
+@app.route("/api/pantries/<int:uri_pantry_id>/hours", methods=["POST"])
+def post_pantry_hours(uri_pantry_id):
+    pantry_id = request.form.get("pantry_id")
+    day_of_week = request.form.get("day_of_week", type=Weekday)
+    status = request.form.get("status", type=HourlyRangeStatus)
+    open_time = request.form.get("open_time")
+    close_time = request.form.get("close_time")
+
+    # Ensure mandatory fields present
+    err = ""
+    if pantry_id is None:
+        err += "pantry_id"
+    if day_of_week is None:
+        err += "day_of_week" if len(err) == 0 else ", day_of_week"
+    if status is None:
+        err += "status" if len(err) == 0 else ", status"
+    if len(err) > 0:
+        abort(
+            400,
+            f"Mandatory pantry_hours field(s) {{{err}}} were not present in the request.",
+        )
+
+    # Validate given open time, close time, and status, if any
+    match status:
+        case "OPEN":
+            if open_time is None:  # OPEN: (NULL, 7:00:00 PM)
+                abort(
+                    400,
+                    f"An opening time needs to be specified for an OPEN hourly range.",
+                )
+            if close_time is not None:  # OPEN: (7:00:00 AM, 6:00:00 PM)
+                validate_open_and_close_times(open_time, close_time)
+        case "CLOSED" | "UNKNOWN":
+            if open_time is None:
+                if close_time is not None:  # CLOSED: (NULL, 6:00:00 PM)
+                    abort(
+                        400,
+                        "An opening time needs to be given with a corresponding close time.",
+                    )
+            else:
+                if close_time is None:  # CLOSED: (7:00:00 PM, NULL)
+                    abort(
+                        400,
+                        "If an opening time is provided, a fixed closing time must be provided for CLOSED hourly ranges.",
+                    )
+                else:  # CLOSED: (7:00:00 AM, 6:00:00 PM)
+                    validate_open_and_close_times(open_time, close_time)
+        case _:
+            abort(400, f"Given status {{{status}}} is not an acceptable value.")
+
+    # perform insertion
+    hours = PantryHours()
+    hours.pantry_id = pantry_id
+    hours.day_of_week = day_of_week
+    hours.status = status
+    hours.open_time = open_time
+    hours.close_time = close_time
+    db.session.add(hours)
+    try:
+        db.session.commit()
+    except Exception as e:
+        abort(401, "collision?")
+    else:
+        return
+
+
+# Helper function that will abort, returning 400 BAD REQUEST if the user-given
+# open and close times are either malformed or invalid.
+def validate_open_and_close_times(open: str, close: str) -> None:
+    try:
+        open_datetime = datetime.strftime(open, "%-I:%M:%S %p")
+        close_datetime = datetime.strftime(close, "%-I:%M:%S %p")
+    except Exception as e:
+        abort(
+            400,
+            f"Malformed open or close time (open:{{{open}}}, close:{{{close}}}). Please provide the times in format HH:MM:SS <AM/PM>; e.g. 7:00:00 PM.",
+        )
+    else:
+        if close_datetime < open_datetime:
+            abort(
+                400, f"Closing time {{{close}}} is later than opening time {{{open}}}."
+            )
 
 
 if __name__ == "__main__":

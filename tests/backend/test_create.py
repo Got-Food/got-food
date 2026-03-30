@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-# Test "Pantries" table
+# Used in testing the "Pantries" table
 PANTRY_VALID_MANDATORY_DATA = {
     "url": "https://www.google.com",
     "name": "Test Creation Pantry",
@@ -13,14 +13,16 @@ PANTRY_VALID_MANDATORY_DATA = {
     "has_variable_hours": False,
 }
 
+# Used in testing the "PantryHours" table
+HOURS_VALID_MANDATORY_DATA = {
+    "pantry_id": 1,
+    "day_of_week": "MONDAY",
+    "status": "OPEN",
+}
+
 
 def test_pantries_null_data(client):
     response = client.post("/api/pantries", data=None)
-    assert response.status_code == 400
-
-
-def test_pantries_null_data_fields(client):
-    response = client.post("/api/pantries", data={None})
     assert response.status_code == 400
 
 
@@ -42,7 +44,7 @@ def test_pantries_mandatory_fields_are_none(client):
 
 
 def test_pantries_mandatory_fields_all_valid(client):
-    response = client.post("/api/pantries", PANTRY_VALID_MANDATORY_DATA)
+    response = client.post("/api/pantries", data=PANTRY_VALID_MANDATORY_DATA)
     assert response.status_code == 201
     assert response.location == "/api/pantries/71"
     assert response.body["id"] == 71
@@ -89,7 +91,7 @@ def test_pantries_malformed_address_type(client):
 
 def test_pantries_malformed_city_max_len(client):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
-    data["city"] = "NULL" * (100 // 4) + 1
+    data["city"] = "NULL" * ((100 // 4) + 1)
     response = client.post("/api/pantries", data=data)
     assert response.status_code == 400
 
@@ -224,40 +226,226 @@ def test_pantries_any_id(client):
 
 # Test "PantryHours" table
 def test_hours_null_data(client):
-    pass
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=None
+    )
+    assert response.status_code == 400
 
 
 def test_hours_mandatory_fields_some_missing(client):
-    pass
+    data = deepcopy(HOURS_VALID_MANDATORY_DATA)
+    del data["pantry_id"]
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 400
 
 
 def test_hours_mandatory_fields_are_none(client):
-    pass
+    data = deepcopy(HOURS_VALID_MANDATORY_DATA)
+    for k in data:
+        data[k] = None
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 400
+
+
+def test_hours_malformed_pantry_id_type(client):
+    # Test handling of form data
+    data = deepcopy(HOURS_VALID_MANDATORY_DATA)
+    data["pantry_id"] = "Hello world!"
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 400
+
+    # Test handling of bad URI
+    response = client.post(f"/api/pantries/{data["pantry_id"]}/hours", data=data)
+    assert response.status_code == 404
+
+
+def test_hours_malformed_day_of_week_type(client):
+    data = deepcopy(HOURS_VALID_MANDATORY_DATA)
+    data["day_of_week"] = 0.15
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 400
+
+
+def test_hours_malformed_day_of_week_value(client):
+    data = deepcopy(HOURS_VALID_MANDATORY_DATA)
+    data["day_of_week"] = "Hello world!"
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 400
+
+
+def test_hours_malformed_status_type(client):
+    data = deepcopy(HOURS_VALID_MANDATORY_DATA)
+    data["status"] = 0.15
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 400
+
+
+def test_hours_malformed_status_value(client):
+    data = deepcopy(HOURS_VALID_MANDATORY_DATA)
+    data["status"] = "NONE?"
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 400
 
 
 def test_hours_mandatory_fields_all_valid(client):
-    pass
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=HOURS_VALID_MANDATORY_DATA,
+    )
+    assert response.status_code == 201
+    assert (
+        response.location
+        == f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours"
+    )
+    assert response.body["status"] == "OPEN"
+    assert response.body["day_of_week"] == "MONDAY"
 
 
 def test_hours_optional_fields_some_missing(client):
-    pass
+    data = deepcopy(HOURS_VALID_MANDATORY_DATA)
+    data["open_time"] = "7:00:00 AM"
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 201
+    assert response.body["open_time"] == "7:00:00 AM"
+
+
+def test_hours_optional_fields_malformed_open_time(client):
+    data = deepcopy(HOURS_VALID_MANDATORY_DATA)
+    data["open_time"] = "Hello world!"
+    data["close_time"] = "7:00:00 PM"
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 400
+
+
+def test_hours_optional_fields_malformed_close_time(client):
+    data = deepcopy(HOURS_VALID_MANDATORY_DATA)
+    data["open_time"] = "7:00:00 AM"
+    data["close_time"] = "Hello world!"
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 400
 
 
 def test_hours_optional_fields_some_none(client):
-    pass
+    # Test when open time is defined
+    data = deepcopy(HOURS_VALID_MANDATORY_DATA)
+    data["open_time"] = "7:00:00 PM"
+    data["close_time"] = None
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 201
+
+    # Test when neither open or close time are defined, but status is closed
+    data["open_time"] = None
+    data["close_time"] = None
+    data["status"] = "CLOSED"
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 201
 
 
 def test_hours_optional_fields_violating_constraints(client):
-    pass
+    # Test NULL open + close time, but status says "Open"
+    data = deepcopy(HOURS_VALID_MANDATORY_DATA)
+    data["open_time"] = None
+    data["close_time"] = None
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 400
+
+    # Test NULL open time, but defined close time
+    data = deepcopy(HOURS_VALID_MANDATORY_DATA)
+    data["open_time"] = None
+    data["close_time"] = "7:00:00 PM"
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 400
+
+    # Test close time earlier than open time
+    data["open_time"] = "6:00:00 AM"
+    data["close_time"] = "5:00:00 AM"
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 400
 
 
 def test_hours_optional_fields_all_valid(client):
-    pass
+    # Test normal OPEN range
+    data = deepcopy(HOURS_VALID_MANDATORY_DATA)
+    data["open_time"] = "6:00:00 AM"
+    data["close_time"] = "7:00:00 PM"
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 201
+
+    # Test CLOSED time entry
+    data["open_time"] = None
+    data["close_time"] = None
+    data["status"] = "CLOSED"
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 201
+
+
+def test_hours_invalid_pantry_id(client):
+    # Test when URI DNE
+    data = deepcopy(HOURS_VALID_MANDATORY_DATA)
+    data["pantry_id"] = 1000
+    response = client.post(f"/api/pantries/{data["pantry_id"]}/hours", data=data)
+    assert response.status_code == 404
+
+    # Test when form data doesn't match the URI
+    data["pantry_id"] = 2
+    response = client.post(
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+    )
+    assert response.status_code == 400
+
+
+def test_hours_given_primary_id(client):
+    # Test when URI DNE
+    data = deepcopy(HOURS_VALID_MANDATORY_DATA)
+    data["id"] = 1
+    response = client.post(f"/api/pantries/{data["pantry_id"]}/hours", data=data)
+    assert response.status_code == 201
+    assert response.body["id"] > 1
 
 
 def test_hours_colliding_entry(client):
-    pass
-
-
-def test_hours_valid_entry(client):
-    pass
+    response = client.post(
+        f"/api/pantries/63/hours",
+        data={
+            "pantry_id": 63,
+            "day_of_week": "WEDNESDAY",
+            "status": "CLOSED",
+            "open_time": None,
+            "close_time": None,
+        },
+    )
+    assert response.status_code == 409
