@@ -6,7 +6,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship
 from sqlalchemy.exc import IntegrityError, DataError
 from psycopg2 import errors
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from enum import Enum
@@ -318,6 +318,24 @@ def get_pantry_by_id(pantry_id):
 
 
 # -------------------------
+# DELETE /api/pantries/<id>
+# Deletes the pantry entry associated with the given unique ID.
+# -------------------------
+@app.route("/api/pantries/<int:pantry_id>", methods=["DELETE"])
+def delete_pantry_by_id(pantry_id):
+    res = Pantries.query.filter(Pantries.id == pantry_id).delete()
+    db.session.commit()
+    
+    # If more than 1 row was deleted, this indicates a critical DB error,
+    # since the combination of (id, pantry_id) should be unique
+    if res > 1:
+        print(f"\n\n\n{res}\n\n\n", flush=True)
+        db.session.rollback()
+        abort(500, "The server encountered a multiple deletion error.")
+    return {}, (200 if res == 1 else 404)
+
+
+# -------------------------
 # GET /api/pantries/<id>/hours
 # Gets only a specific pantry's hours by ID.
 # -------------------------
@@ -383,6 +401,28 @@ def post_pantry_hours(uri_pantry_id):
         # Bad form data
         return res, 400
     return jsonify(hours.serialize()), 201
+
+
+# -------------------------
+# DELETE /api/pantries/<pantry_id>/hours/<hours_id>
+# Deletes a specific hourly range entry by ID for some given pantry ID.
+# -------------------------
+@app.route(
+    "/api/pantries/<int:uri_pantry_id>/hours/<int:uri_hours_id>", methods=["DELETE"]
+)
+def delete_hourly_range_by_id(uri_pantry_id, uri_hours_id):
+    res = PantryHours.query.filter(
+        PantryHours.pantry_id == uri_pantry_id, PantryHours.id == uri_hours_id
+    ).delete()
+    db.session.commit()
+
+    # If more than 1 row was deleted, this indicates a critical DB error,
+    # since the combination of (id, pantry_id) should be unique
+    if res > 1:
+        print(f"\n\n\n{res}\n\n\n", flush=True)
+        db.session.rollback()
+        abort(500, "The server encountered a multiple deletion error.")
+    return {}, (200 if res == 1 else 404)
 
 
 if __name__ == "__main__":
