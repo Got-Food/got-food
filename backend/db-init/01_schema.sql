@@ -102,10 +102,12 @@ CREATE TABLE IF NOT EXISTS pantry_hours (
         ( 
             open_time IS NULL  
             AND close_time IS NULL 
+            AND status != 'OPEN'
         ) 
         OR ( 
             open_time IS NOT NULL  
             AND close_time IS NULL 
+            AND status = 'OPEN'
         ) 
         OR ( 
             open_time IS NOT NULL  
@@ -113,5 +115,10 @@ CREATE TABLE IF NOT EXISTS pantry_hours (
             AND open_time < close_time 
         ) 
     ), 
-    CONSTRAINT time_range_is_unique_per_pantry UNIQUE (pantry_id, day_of_week, open_time) 
+    CONSTRAINT time_range_is_unique_per_pantry UNIQUE NULLS NOT DISTINCT (
+        pantry_id, 
+        day_of_week, 
+        open_time, 
+        close_time
+    )
 ); 
