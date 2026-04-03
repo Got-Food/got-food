@@ -318,6 +318,64 @@ def get_pantry_by_id(pantry_id):
 
 
 # -------------------------
+# PUT /api/pantries/<id>
+# Updates fields on an existing pantry entry.
+# -------------------------
+@app.route("/api/pantries/<int:pantry_id>", methods=["PUT"])
+def put_pantry_by_id(pantry_id):
+    pantry = db.get_or_404(Pantries, pantry_id)
+
+    # Update only fields that were provided
+    fields = ["url", "name", "address", "city", "state", "zip", "phone", "email", "comments"]
+    for field in fields:
+        value = request.form.get(field)
+        if value is not None:
+            setattr(pantry, field, value)
+
+    latitude = request.form.get("latitude", type=float)
+    if latitude is not None:
+        pantry.latitude = latitude
+
+    longitude = request.form.get("longitude", type=float)
+    if longitude is not None:
+        pantry.longitude = longitude
+
+    eligibility = request.form.getlist("eligibility")
+    if eligibility:
+        pantry.eligibility = eligibility
+
+    supported_diets = request.form.getlist("supported_diets")
+    if supported_diets:
+        try:
+            pantry.supported_diets = [SupportedDiet(d.upper()) for d in supported_diets]
+        except (KeyError, ValueError) as e:
+            return {"error_type": type(e).__name__, "message": str(e)}, 400
+
+    has_variable_hours = request.form.get("has_variable_hours")
+    if has_variable_hours is not None:
+        match has_variable_hours.casefold():
+            case "true":
+                pantry.has_variable_hours = True
+            case "false":
+                pantry.has_variable_hours = False
+            case _:
+                return {
+                    "error_type": ValueError.__name__,
+                    "message": f"has_variable_hours must be boolean, not {{{has_variable_hours}}}.",
+                }, 400
+
+    try:
+        db.session.commit()
+    except (IntegrityError, DataError) as e:
+        db.session.rollback()
+        res = {"error_type": type(e).__name__, "message": str(e)}
+        if type(e.orig) is errors.UniqueViolation:
+            return res, 409
+        return res, 400
+    return jsonify(pantry.serialize()), 200
+
+
+# -------------------------
 # DELETE /api/pantries/<id>
 # Deletes the pantry entry associated with the given unique ID.
 # -------------------------
@@ -401,6 +459,60 @@ def post_pantry_hours(uri_pantry_id):
         # Bad form data
         return res, 400
     return jsonify(hours.serialize()), 201
+
+
+# -------------------------
+# PUT /api/pantries/<pantry_id>/hours/<hours_id>
+# Updates fields on an existing hourly range entry.
+# -------------------------
+@app.route(
+    "/api/pantries/<int:uri_pantry_id>/hours/<int:uri_hours_id>", methods=["PUT"]
+)
+def put_pantry_hours(uri_pantry_id, uri_hours_id):
+    hours = db.session.execute(
+        db.select(PantryHours).filter_by(id=uri_hours_id, pantry_id=uri_pantry_id)
+    ).scalar_one_or_none()
+
+    if hours is None:
+        abort(404)
+
+    day_of_week = request.form.get("day_of_week", type=Weekday)
+    if day_of_week is not None:
+        hours.day_of_week = day_of_week
+
+    status = request.form.get("status", type=HourlyRangeStatus)
+    if status is not None:
+        hours.status = status
+
+    open_time = request.form.get("open_time")
+    if open_time is not None:
+        try:
+            hours.open_time = datetime.strptime(open_time, "%I:%M %p")
+        except ValueError:
+            return {
+                "error_type": ValueError.__name__,
+                "message": "Open and closing times need to be of the form HH:MM <AM/PM>.",
+            }, 400
+
+    close_time = request.form.get("close_time")
+    if close_time is not None:
+        try:
+            hours.close_time = datetime.strptime(close_time, "%I:%M %p")
+        except ValueError:
+            return {
+                "error_type": ValueError.__name__,
+                "message": "Open and closing times need to be of the form HH:MM <AM/PM>.",
+            }, 400
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        res = {"error_type": type(e).__name__, "message": str(e)}
+        if type(e.orig) is errors.UniqueViolation:
+            return res, 409
+        return res, 400
+    return jsonify(hours.serialize()), 200
 
 
 # -------------------------
