@@ -35,7 +35,8 @@ def test_get_all_under_50_concurrent_users(client):
 
 def test_random_api_under_500_concurrent_users(client):
     CONCURRENT_USERS = 500
-    THRESHOLD_SECONDS = 1.0
+    P95_THRESHOLD_SECONDS = 1.0
+    AVG_THRESHOLD_SECONDS = 0.1
     STATIC_ENDPOINTS = [
         {"endpoint": "/api/pantries", "identifier": False},
         {"endpoint": "/api/pantries/<ID>", "identifier": True},
@@ -65,6 +66,9 @@ def test_random_api_under_500_concurrent_users(client):
     durations = [d for d, _ in results]
     durations.sort()
     p95 = durations[int(len(durations) * 0.95)]
-    assert p95 < THRESHOLD_SECONDS, (
-        f"95th percentile request took {p95:.2f}s — exceeds {THRESHOLD_SECONDS}s limit"
+    assert p95 < P95_THRESHOLD_SECONDS, (
+        f"95th percentile request took {p95:.2f}s — exceeds {P95_THRESHOLD_SECONDS}s limit"
+    )
+    assert (sum(durations) / len(durations)) < AVG_THRESHOLD_SECONDS, (
+        f"Avg. request took {p95:.2f}s — exceeds {AVG_THRESHOLD_SECONDS}s limit"
     )
