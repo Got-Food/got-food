@@ -14,10 +14,7 @@ function Navbar() {
           <NavLink to="/resources">Other Resources</NavLink>
         </li>
         <li>
-          <NavLink to="/favorites">Favorites</NavLink>
-        </li>
-        <li>
-          <NavLink to="/profile">Profile</NavLink>
+          <NavLink to="/form">Add a Pantry</NavLink>
         </li>
       </ul>
     </nav>
