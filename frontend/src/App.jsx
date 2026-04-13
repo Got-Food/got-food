@@ -5,7 +5,6 @@ import { far } from "@fortawesome/free-regular-svg-icons";
 import { fab } from "@fortawesome/free-brands-svg-icons";
 import SearchPage from "./pages/SearchPage";
 import ResourcesPage from "./pages/ResourcesPage";
-import FormPage from "./pages/FormPage";
 
 library.add(fas, far, fab);
 
@@ -14,9 +13,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<SearchPage />} />
-        <Route path="/resources" element={<ResourcesPage />} />
-        <Route path="/form" element={<FormPage />} />
-        
+        <Route path="/events" element={<ResourcesPage />} />        
       </Routes>
     </BrowserRouter>
   );

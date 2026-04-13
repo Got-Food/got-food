@@ -11,10 +11,7 @@ function Navbar() {
           </NavLink>
         </li>
         <li>
-          <NavLink to="/resources">Other Resources</NavLink>
-        </li>
-        <li>
-          <NavLink to="/form">Add a Pantry</NavLink>
+          <NavLink to="/events">Events</NavLink>
         </li>
       </ul>
     </nav>
