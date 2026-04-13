@@ -40,7 +40,7 @@ def test_hours_delete_id_in_table(client):
 def test_hours_delete_id_bad_uri(client):
     # Pick some hours entry that is present in table for given pantry ID
     response = client.get("/api/pantries/63/hours")
-    hours_id = response.json[randint(0, len(response.json))]["id"]
+    hours_id = response.json[randint(0, len(response.json) - 1)]["id"]
     assert any([h["id"] == hours_id for h in response.json])
 
     # Verify hours entry is not present for another pantry
