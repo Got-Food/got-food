@@ -10,6 +10,13 @@ services:
       - FLASK_APP=app.py
       - FLASK_ENV=development
       - DATABASE_URL=postgresql://user:password@db_test:5432/foodbank_test_db
+      - REDIS_URL=redis://redis_test:6379
+      - REDIS_CACHE_TIMEOUT=300
+    depends_on:
+      - redis_test
+
+  redis_test:
+    image: redis:alpine
     depends_on:
       db_test:
         condition: service_healthy

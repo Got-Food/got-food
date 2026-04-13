@@ -1,6 +1,7 @@
 import os
 
 from flask import Flask, request, jsonify, abort
+from flask_caching import Cache
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship
@@ -21,6 +22,16 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Initialize SQLAlchemy with the Flask application
 db = SQLAlchemy(app)
+
+# Initialize Flask-Caching
+cache = Cache(
+    config={
+        "CACHE_TYPE": "RedisCache",
+        "CACHE_REDIS_URL": os.environ.get("REDIS_URL"),
+        "CACHE_DEFAULT_TIMEOUT": os.environ.get("REDIS_CACHE_TIMEOUT"),
+    }
+)
+cache.init_app(app)
 
 
 # =========================
@@ -141,28 +152,10 @@ class PantryHours(db.Model):
             "close_time": close_time,
         }
 
-
-# =========================
-# Routes
-# =========================
-
-
-# -------------------------
-# GET /api/pantries
-# Gets all pantry information. Supports URL query parameters
-# for filtering.
-# -------------------------
-@app.route("/api/pantries", methods=["GET"])
-def get_pantries():
-    # URL Query parameters
-    zip_code = request.args.get("zip")
-    city = request.args.get("city")
-    supported_diets = request.args.get("supported_diets")
-    eligibility = request.args.get("eligibility")
-    open_now = request.args.get("open_now", type=bool)
-    varied_only = request.args.get("varied_only", type=bool)
-    show_unknown = request.args.get("show_unknown", type=bool)
-
+@cache.memoize()
+def get_pantries_memoized(
+    zip_code, city, supported_diets, eligibility, open_now, varied_only, show_unknown
+):
     # Actual query construction
     query = db.select(Pantries).order_by(Pantries.id)
     if zip_code:
@@ -244,6 +237,29 @@ def get_pantries():
     return jsonify(results)
 
 
+# =========================
+# Routes
+# =========================
+
+
+# -------------------------
+# GET /api/pantries
+# Gets all pantry information. Supports URL query parameters
+# for filtering.
+# -------------------------
+@app.route("/api/pantries", methods=["GET"])
+def get_pantries():
+    return get_pantries_memoized(
+        request.args.get("zip"),
+        request.args.get("city"),
+        request.args.get("supported_diets"),
+        request.args.get("eligibility"),
+        request.args.get("open_now", type=bool),
+        request.args.get("varied_only", type=bool),
+        request.args.get("show_unknown", type=bool),
+    )
+
+
 # -------------------------
 # POST /api/pantries
 # Creates a new pantry entry in the Pantries table.
@@ -303,6 +319,10 @@ def post_pantries():
         if type(e.orig) is errors.UniqueViolation:
             return res, 409
         return res, 400
+    
+    cache.delete_memoized(get_pantries_memoized)
+    cache.delete_memoized(get_pantry_by_id, pantry.id)
+    cache.delete_memoized(get_pantry_hours, pantry.id)
     return jsonify(pantry.serialize()), 201
 
 
@@ -311,6 +331,7 @@ def post_pantries():
 # Gets all information associated with a specific pantry ID.
 # -------------------------
 @app.route("/api/pantries/<int:pantry_id>", methods=["GET"])
+@cache.memoize()
 def get_pantry_by_id(pantry_id):
     pantry = db.get_or_404(Pantries, pantry_id)
     pantry = pantry.serialize()
@@ -326,7 +347,17 @@ def put_pantry_by_id(pantry_id):
     pantry = db.get_or_404(Pantries, pantry_id)
 
     # Update only fields that were provided
-    fields = ["url", "name", "address", "city", "state", "zip", "phone", "email", "comments"]
+    fields = [
+        "url",
+        "name",
+        "address",
+        "city",
+        "state",
+        "zip",
+        "phone",
+        "email",
+        "comments",
+    ]
     for field in fields:
         value = request.form.get(field)
         if value is not None:
@@ -372,6 +403,11 @@ def put_pantry_by_id(pantry_id):
         if type(e.orig) is errors.UniqueViolation:
             return res, 409
         return res, 400
+    
+    # Clear memoized pantry data, since it's been updated
+    cache.delete_memoized(get_pantries_memoized)
+    cache.delete_memoized(get_pantry_by_id, pantry_id)
+    cache.delete_memoized(get_pantry_hours, pantry_id)
     return jsonify(pantry.serialize()), 200
 
 
@@ -383,13 +419,15 @@ def put_pantry_by_id(pantry_id):
 def delete_pantry_by_id(pantry_id):
     res = Pantries.query.filter(Pantries.id == pantry_id).delete()
     db.session.commit()
-    
+
     # If more than 1 row was deleted, this indicates a critical DB error,
     # since the combination of (id, pantry_id) should be unique
     if res > 1:
-        print(f"\n\n\n{res}\n\n\n", flush=True)
         db.session.rollback()
         abort(500, "The server encountered a multiple deletion error.")
+    cache.delete_memoized(get_pantries_memoized)
+    cache.delete_memoized(get_pantry_by_id, pantry_id)
+    cache.delete_memoized(get_pantry_hours, pantry_id)
     return {}, (200 if res == 1 else 404)
 
 
@@ -398,6 +436,7 @@ def delete_pantry_by_id(pantry_id):
 # Gets only a specific pantry's hours by ID.
 # -------------------------
 @app.route("/api/pantries/<int:pantry_id>/hours", methods=["GET"])
+@cache.memoize()
 def get_pantry_hours(pantry_id):
     query = db.select(PantryHours).filter_by(pantry_id=pantry_id)
     hours = db.session.execute(query).scalars().all()
@@ -458,6 +497,9 @@ def post_pantry_hours(uri_pantry_id):
             return res, 409
         # Bad form data
         return res, 400
+    cache.delete_memoized(get_pantries_memoized)
+    cache.delete_memoized(get_pantry_by_id, uri_pantry_id)
+    cache.delete_memoized(get_pantry_hours, uri_pantry_id)
     return jsonify(hours.serialize()), 201
 
 
@@ -512,6 +554,9 @@ def put_pantry_hours(uri_pantry_id, uri_hours_id):
         if type(e.orig) is errors.UniqueViolation:
             return res, 409
         return res, 400
+    cache.delete_memoized(get_pantries_memoized)
+    cache.delete_memoized(get_pantry_by_id, uri_pantry_id)
+    cache.delete_memoized(get_pantry_hours, uri_pantry_id)
     return jsonify(hours.serialize()), 200
 
 
@@ -531,9 +576,11 @@ def delete_hourly_range_by_id(uri_pantry_id, uri_hours_id):
     # If more than 1 row was deleted, this indicates a critical DB error,
     # since the combination of (id, pantry_id) should be unique
     if res > 1:
-        print(f"\n\n\n{res}\n\n\n", flush=True)
         db.session.rollback()
         abort(500, "The server encountered a multiple deletion error.")
+    cache.delete_memoized(get_pantries_memoized)
+    cache.delete_memoized(get_pantry_by_id, uri_pantry_id)
+    cache.delete_memoized(get_pantry_hours, uri_pantry_id)
     return {}, (200 if res == 1 else 404)
 
 
