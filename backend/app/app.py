@@ -1,17 +1,17 @@
 import os
 import json
 from flask import Flask, request, jsonify, abort
-from flask_caching import Cache
-from flask_sqlalchemy import SQLAlchemy
 
+
+from .cache import cache
+from .database import database as db
 from sqlalchemy.exc import IntegrityError, DataError
 from werkzeug.exceptions import HTTPException
 from psycopg2 import errors
 from sqlalchemy import or_, and_
 from datetime import datetime
 from zoneinfo import ZoneInfo
-
-
+from .models import Weekday, SupportedDiet, HourlyRangeStatus, Pantries, PantryHours
 
 app = Flask(__name__)
 
@@ -22,18 +22,20 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Initialize SQLAlchemy with the Flask application
-db = SQLAlchemy(app)
+db.init_app(app)
 
 # Initialize Flask-Caching
-cache = Cache(
+cache.init_app(
+    app,
     config={
         "CACHE_TYPE": "RedisCache",
         "CACHE_REDIS_URL": os.environ.get("REDIS_URL"),
         "CACHE_DEFAULT_TIMEOUT": os.environ.get("REDIS_CACHE_TIMEOUT"),
-    }
+    },
 )
-cache.init_app(app)
-from .models import Weekday, SupportedDiet, HourlyRangeStatus, Pantries, PantryHours
+
+
+
 
 @app.errorhandler(HTTPException)
 def handle_exception(e):
