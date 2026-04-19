@@ -1,6 +1,5 @@
-from ..app import db
+from ..database import database as db
 from .enums import SupportedDiet
-from ..app import db
 from .enums import Weekday, HourlyRangeStatus
 
 from datetime import datetime

@@ -1,10 +1,3 @@
-import os
-import json
-from flask import Flask, request, jsonify, abort
-
-
-from .cache import cache
-from .database import database as db
 from sqlalchemy.exc import IntegrityError, DataError
 from werkzeug.exceptions import HTTPException
 from psycopg2 import errors
@@ -13,31 +6,14 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from .models import Weekday, SupportedDiet, HourlyRangeStatus, Pantries, PantryHours
 
-app = Flask(__name__)
+import json
+from flask import Blueprint, request, jsonify, abort
+from .cache import cache
+from .database import database as db
 
-# =========================
-# Connect to PostgreSQL using DATABASE_URL from docker-compose
-# =========================
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+api = Blueprint("api", __name__)
 
-# Initialize SQLAlchemy with the Flask application
-db.init_app(app)
-
-# Initialize Flask-Caching
-cache.init_app(
-    app,
-    config={
-        "CACHE_TYPE": "RedisCache",
-        "CACHE_REDIS_URL": os.environ.get("REDIS_URL"),
-        "CACHE_DEFAULT_TIMEOUT": os.environ.get("REDIS_CACHE_TIMEOUT"),
-    },
-)
-
-
-
-
-@app.errorhandler(HTTPException)
+@api.errorhandler(HTTPException)
 def handle_exception(e):
     """
     Default generic error handler from the Flask docs.
@@ -131,7 +107,7 @@ def get_pantries_memoized(
 # Gets all pantry information. Supports URL query parameters
 # for filtering.
 # -------------------------
-@app.route("/api/pantries", methods=["GET"])
+@api.route("/pantries", methods=["GET"])
 def get_pantries():
     return get_pantries_memoized(
         request.args.get("zip"),
@@ -148,7 +124,7 @@ def get_pantries():
 # POST /api/pantries
 # Creates a new pantry entry in the Pantries table.
 # -------------------------
-@app.route("/api/pantries", methods=["POST"])
+@api.route("/pantries", methods=["POST"])
 def post_pantries():
     # Construct model object
     pantry = Pantries(
@@ -224,7 +200,7 @@ def post_pantries():
 # GET /api/pantries/<id>
 # Gets all information associated with a specific pantry ID.
 # -------------------------
-@app.route("/api/pantries/<int:pantry_id>", methods=["GET"])
+@api.route("/pantries/<int:pantry_id>", methods=["GET"])
 @cache.memoize()
 def get_pantry_by_id(pantry_id):
     pantry = db.get_or_404(Pantries, pantry_id)
@@ -236,7 +212,7 @@ def get_pantry_by_id(pantry_id):
 # PUT /api/pantries/<id>
 # Updates fields on an existing pantry entry.
 # -------------------------
-@app.route("/api/pantries/<int:pantry_id>", methods=["PUT"])
+@api.route("/pantries/<int:pantry_id>", methods=["PUT"])
 def put_pantry_by_id(pantry_id):
     pantry = db.get_or_404(Pantries, pantry_id)
 
@@ -324,7 +300,7 @@ def put_pantry_by_id(pantry_id):
 # DELETE /api/pantries/<id>
 # Deletes the pantry entry associated with the given unique ID.
 # -------------------------
-@app.route("/api/pantries/<int:pantry_id>", methods=["DELETE"])
+@api.route("/pantries/<int:pantry_id>", methods=["DELETE"])
 def delete_pantry_by_id(pantry_id):
     res = Pantries.query.filter(Pantries.id == pantry_id).delete()
 
@@ -346,7 +322,7 @@ def delete_pantry_by_id(pantry_id):
 # GET /api/pantries/<id>/hours
 # Gets only a specific pantry's hours by ID.
 # -------------------------
-@app.route("/api/pantries/<int:pantry_id>/hours", methods=["GET"])
+@api.route("/pantries/<int:pantry_id>/hours", methods=["GET"])
 @cache.memoize()
 def get_pantry_hours(pantry_id):
     query = db.select(PantryHours).filter_by(pantry_id=pantry_id)
@@ -359,7 +335,7 @@ def get_pantry_hours(pantry_id):
 # POST /api/pantries/<id>/hours
 # Creates an entry into table pantry_hours.
 # -------------------------
-@app.route("/api/pantries/<int:uri_pantry_id>/hours", methods=["POST"])
+@api.route("/pantries/<int:uri_pantry_id>/hours", methods=["POST"])
 def post_pantry_hours(uri_pantry_id):
 
     # Construct model object
@@ -422,8 +398,8 @@ def post_pantry_hours(uri_pantry_id):
 # PUT /api/pantries/<pantry_id>/hours/<hours_id>
 # Updates fields on an existing hourly range entry.
 # -------------------------
-@app.route(
-    "/api/pantries/<int:uri_pantry_id>/hours/<int:uri_hours_id>", methods=["PUT"]
+@api.route(
+    "/pantries/<int:uri_pantry_id>/hours/<int:uri_hours_id>", methods=["PUT"]
 )
 def put_pantry_hours(uri_pantry_id, uri_hours_id):
     hours = db.session.execute(
@@ -482,8 +458,8 @@ def put_pantry_hours(uri_pantry_id, uri_hours_id):
 # DELETE /api/pantries/<pantry_id>/hours/<hours_id>
 # Deletes a specific hourly range entry by ID for some given pantry ID.
 # -------------------------
-@app.route(
-    "/api/pantries/<int:uri_pantry_id>/hours/<int:uri_hours_id>", methods=["DELETE"]
+@api.route(
+    "/pantries/<int:uri_pantry_id>/hours/<int:uri_hours_id>", methods=["DELETE"]
 )
 def delete_hourly_range_by_id(uri_pantry_id, uri_hours_id):
     res = PantryHours.query.filter(
@@ -502,7 +478,3 @@ def delete_hourly_range_by_id(uri_pantry_id, uri_hours_id):
     cache.delete_memoized(get_pantry_by_id, uri_pantry_id)
     cache.delete_memoized(get_pantry_hours, uri_pantry_id)
     return {}, 200
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
