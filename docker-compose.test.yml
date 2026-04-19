@@ -1,8 +1,8 @@
 services:
   backend_test:
     build:
-      dockerfile: tests/backend/Dockerfile.test
-      context: .
+      context: ./backend
+      dockerfile: Dockerfile.test
     command: pytest
     ports:
       - "5001:5001"

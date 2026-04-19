@@ -1,6 +1,0 @@
-FROM python:3.12-slim
-WORKDIR /app
-COPY backend/docker_requirements.txt tests/backend/requirements.test.txt ./
-RUN pip install --no-cache-dir -r docker_requirements.txt -r requirements.test.txt
-COPY backend/app.py tests/backend/*.py tests/database/test_links.py ./
-EXPOSE 5001
