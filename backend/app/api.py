@@ -1,17 +1,18 @@
+import json
+from flask import Blueprint, request, jsonify, abort
 from sqlalchemy.exc import IntegrityError, DataError
 from werkzeug.exceptions import HTTPException
 from psycopg2 import errors
-from sqlalchemy import or_, and_
+from sqlalchemy import or_
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from .models import Weekday, SupportedDiet, HourlyRangeStatus, Pantries, PantryHours
 
-import json
-from flask import Blueprint, request, jsonify, abort
+from .models import Weekday, SupportedDiet, HourlyRangeStatus, Pantries, PantryHours
 from .cache import cache
 from .database import database as db
 
 api = Blueprint("api", __name__)
+
 
 @api.errorhandler(HTTPException)
 def handle_exception(e):
@@ -36,7 +37,12 @@ def handle_exception(e):
 def get_pantries_memoized(
     zip_code, city, supported_diets, eligibility, open_now, varied_only, show_unknown
 ):
-    # Actual query construction
+    """Memoized helper function for the GET /pantries endpoint.
+
+    By memoizing the URL query parameters passed to /pantries, we are able to
+    cache the responses for each unique combination of URL query parameters.
+    This makes API responses both accurate and fast.
+    """
     query = db.select(Pantries).order_by(Pantries.id)
     if zip_code:
         query = query.filter_by(zip=zip_code)
@@ -97,18 +103,9 @@ def get_pantries_memoized(
     return jsonify(results)
 
 
-# =========================
-# Routes
-# =========================
-
-
-# -------------------------
-# GET /api/pantries
-# Gets all pantry information. Supports URL query parameters
-# for filtering.
-# -------------------------
 @api.route("/pantries", methods=["GET"])
 def get_pantries():
+    """API endpoint server that wraps the memoized helper function get_pantries_memoized()."""
     return get_pantries_memoized(
         request.args.get("zip"),
         request.args.get("city"),
@@ -120,13 +117,9 @@ def get_pantries():
     )
 
 
-# -------------------------
-# POST /api/pantries
-# Creates a new pantry entry in the Pantries table.
-# -------------------------
 @api.route("/pantries", methods=["POST"])
 def post_pantries():
-    # Construct model object
+    """Inserts a new row into the pantries table based on the given form data."""
     pantry = Pantries(
         url=request.form.get("url"),
         name=request.form.get("name"),
@@ -196,24 +189,29 @@ def post_pantries():
     return jsonify(pantry.serialize()), 201
 
 
-# -------------------------
-# GET /api/pantries/<id>
-# Gets all information associated with a specific pantry ID.
-# -------------------------
 @api.route("/pantries/<int:pantry_id>", methods=["GET"])
 @cache.memoize()
 def get_pantry_by_id(pantry_id):
+    """Grabs a specific pantry from the pantries table by unique ID.
+
+    Caches the response based on the ID of the pantry.
+    """
     pantry = db.get_or_404(Pantries, pantry_id)
     pantry = pantry.serialize()
     return jsonify(pantry)
 
 
-# -------------------------
-# PUT /api/pantries/<id>
-# Updates fields on an existing pantry entry.
-# -------------------------
 @api.route("/pantries/<int:pantry_id>", methods=["PUT"])
 def put_pantry_by_id(pantry_id):
+    """Updates the fields of a specific pantry with id pantry_id, based on given
+    form data.
+
+    Note that this function uses getlist() for eligibility and supported_diets,
+    while the GET functions use get() and split(..., ','). This is because
+    the fields are passed as form data here, which lends itself well to the getlist()
+    format (eligibility=22000 && eligibility=22001 && eligibility=22002 ...) rather
+    than the CSV approach we take in the GET functions (...?eligibility=22000,22001,22002...).
+    """
     pantry = db.get_or_404(Pantries, pantry_id)
 
     # Update only fields that were provided
@@ -296,12 +294,12 @@ def put_pantry_by_id(pantry_id):
     return jsonify(pantry.serialize()), 200
 
 
-# -------------------------
-# DELETE /api/pantries/<id>
-# Deletes the pantry entry associated with the given unique ID.
-# -------------------------
 @api.route("/pantries/<int:pantry_id>", methods=["DELETE"])
 def delete_pantry_by_id(pantry_id):
+    """Deletes a row from the pantries table based on given pantry_id.
+
+    Clears the cache after deletion to prevent stale values.
+    """
     res = Pantries.query.filter(Pantries.id == pantry_id).delete()
 
     # If more than 1 row was deleted, this indicates a critical DB error,
@@ -318,27 +316,24 @@ def delete_pantry_by_id(pantry_id):
     return {}, 200
 
 
-# -------------------------
-# GET /api/pantries/<id>/hours
-# Gets only a specific pantry's hours by ID.
-# -------------------------
 @api.route("/pantries/<int:pantry_id>/hours", methods=["GET"])
 @cache.memoize()
 def get_pantry_hours(pantry_id):
+    """Gets a pantry's hourly listings based on a given pantry_id."""
     query = db.select(PantryHours).filter_by(pantry_id=pantry_id)
     hours = db.session.execute(query).scalars().all()
     hours = [h.serialize() for h in hours]
     return jsonify(hours)
 
 
-# -------------------------
-# POST /api/pantries/<id>/hours
-# Creates an entry into table pantry_hours.
-# -------------------------
-@api.route("/pantries/<int:uri_pantry_id>/hours", methods=["POST"])
-def post_pantry_hours(uri_pantry_id):
+@api.route("/pantries/<int:pantry_id>/hours", methods=["POST"])
+def post_pantry_hours(pantry_id):
+    """Inserts an hourly listing for pantry with ID pantry_id.
 
-    # Construct model object
+    Note that for submitted data, a submitted pantry ID in the form must align
+    with the pantry ID given in the URI. Otherwise, we throw 400 BAD REQUEST.
+    """
+
     hours = PantryHours(
         pantry_id=request.form.get("pantry_id", type=int),
         day_of_week=request.form.get("day_of_week", type=Weekday),
@@ -348,10 +343,10 @@ def post_pantry_hours(uri_pantry_id):
     )
 
     # Ensure URI pantry ID and form data pantry ID are in alignment
-    if hours.pantry_id is not None and hours.pantry_id != uri_pantry_id:
+    if hours.pantry_id is not None and hours.pantry_id != pantry_id:
         abort(
             400,
-            f"The pantry_id {{{hours.pantry_id}}} provided in the submitted form does not patch that of the URI, {{{uri_pantry_id}}}. Please ensure that they are equivalent.",
+            f"The pantry_id {{{hours.pantry_id}}} provided in the submitted form does not patch that of the URI, {{{pantry_id}}}. Please ensure that they are equivalent.",
         )
 
     # Parse datetimes, if there are any. Ensure that they are of the form
@@ -388,22 +383,20 @@ def post_pantry_hours(uri_pantry_id):
                     400,
                     "Malformed pantry hours fields. Ensure that all fields are of the correct format.",
                 )
+
     cache.delete_memoized(get_pantries_memoized)
-    cache.delete_memoized(get_pantry_by_id, uri_pantry_id)
-    cache.delete_memoized(get_pantry_hours, uri_pantry_id)
+    cache.delete_memoized(get_pantry_by_id, pantry_id)
+    cache.delete_memoized(get_pantry_hours, pantry_id)
     return jsonify(hours.serialize()), 201
 
 
-# -------------------------
-# PUT /api/pantries/<pantry_id>/hours/<hours_id>
-# Updates fields on an existing hourly range entry.
-# -------------------------
-@api.route(
-    "/pantries/<int:uri_pantry_id>/hours/<int:uri_hours_id>", methods=["PUT"]
-)
-def put_pantry_hours(uri_pantry_id, uri_hours_id):
+@api.route("/pantries/<int:pantry_id>/hours/<int:hours_id>", methods=["PUT"])
+def put_pantry_hours(pantry_id, hours_id):
+    """Updates the fields of an hourly entry with ID hours_id for some pantry with
+    ID pantry_id.
+    """
     hours = db.session.execute(
-        db.select(PantryHours).filter_by(id=uri_hours_id, pantry_id=uri_pantry_id)
+        db.select(PantryHours).filter_by(id=hours_id, pantry_id=pantry_id)
     ).scalar_one_or_none()
 
     if hours is None:
@@ -448,22 +441,20 @@ def put_pantry_hours(uri_pantry_id, uri_hours_id):
                     400,
                     "Malformed pantry hours fields. Ensure that all fields are of the correct format.",
                 )
+
     cache.delete_memoized(get_pantries_memoized)
-    cache.delete_memoized(get_pantry_by_id, uri_pantry_id)
-    cache.delete_memoized(get_pantry_hours, uri_pantry_id)
+    cache.delete_memoized(get_pantry_by_id, pantry_id)
+    cache.delete_memoized(get_pantry_hours, pantry_id)
     return jsonify(hours.serialize()), 200
 
 
-# -------------------------
-# DELETE /api/pantries/<pantry_id>/hours/<hours_id>
-# Deletes a specific hourly range entry by ID for some given pantry ID.
-# -------------------------
-@api.route(
-    "/pantries/<int:uri_pantry_id>/hours/<int:uri_hours_id>", methods=["DELETE"]
-)
-def delete_hourly_range_by_id(uri_pantry_id, uri_hours_id):
+@api.route("/pantries/<int:pantry_id>/hours/<int:hours_id>", methods=["DELETE"])
+def delete_hourly_range_by_id(pantry_id, hours_id):
+    """Deletes some hourly range with ID hours_id from the entries of a pantry
+    with ID pantry_id.
+    """
     res = PantryHours.query.filter(
-        PantryHours.pantry_id == uri_pantry_id, PantryHours.id == uri_hours_id
+        PantryHours.pantry_id == pantry_id, PantryHours.id == hours_id
     ).delete()
 
     # If more than 1 row was deleted, this indicates a critical DB error,
@@ -472,9 +463,9 @@ def delete_hourly_range_by_id(uri_pantry_id, uri_hours_id):
         db.session.rollback()
         abort(500, "The server encountered a multiple deletion error.")
     elif res == 0:
-        abort(404, f"The targeted resource of pantry ID {uri_pantry_id} was not found.")
+        abort(404, f"The targeted resource of pantry ID {pantry_id} was not found.")
     db.session.commit()
     cache.delete_memoized(get_pantries_memoized)
-    cache.delete_memoized(get_pantry_by_id, uri_pantry_id)
-    cache.delete_memoized(get_pantry_hours, uri_pantry_id)
+    cache.delete_memoized(get_pantry_by_id, pantry_id)
+    cache.delete_memoized(get_pantry_hours, pantry_id)
     return {}, 200

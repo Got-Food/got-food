@@ -1,12 +1,20 @@
-from ..database import database as db
-from .enums import SupportedDiet
-from .enums import Weekday, HourlyRangeStatus
-
 from datetime import datetime
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship
 
+from ..database import database as db
+from .enums import SupportedDiet
+from .enums import Weekday, HourlyRangeStatus
+
+
 class Pantries(db.Model):
+    """An ORM object for a row in the pantries table.
+
+    Defines a serialize() function that can be used with jsonify() to return
+    the results of a query, or the data from some row in the pantries table,
+    to the user through Flask.
+    """
+
     __tablename__ = "pantries"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -29,7 +37,7 @@ class Pantries(db.Model):
     has_variable_hours = db.Column(db.Boolean, nullable=False)
     hours = relationship("PantryHours")
 
-    def serialize(self):
+    def serialize(self) -> dict:
         diets = (
             [x.serialize() for x in self.supported_diets]
             if self.supported_diets is not None
@@ -58,7 +66,15 @@ class Pantries(db.Model):
             "hours": hrs,
         }
 
+
 class PantryHours(db.Model):
+    """An ORM object for a row in the pantry_hours table.
+
+    Defines a serialize() function that can be used with jsonify() to return
+    the results of a query, or the data from some row in the pantries table,
+    to the user through Flask.
+    """
+
     __tablename__ = "pantry_hours"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -72,7 +88,7 @@ class PantryHours(db.Model):
     open_time = db.Column(db.Time)
     close_time = db.Column(db.Time)
 
-    def serialize(self):
+    def serialize(self) -> dict:
         # Convert times to readable 12-hr AM/PM times
         open_time = (
             self.open_time.strftime("%-I:%M %p") if self.open_time is not None else None
