@@ -21,7 +21,7 @@ def test_all_links_valid(client):
 
 
 @pytest.mark.skipif(
-    os.environ.get("INTEGRATION_TESTING") == "true",
+    os.environ.get("CI") == "true",
     reason="Link checks are unreliable in GitHub CI tests. Check results manually to verify whether or not a URL is dead.",
 )
 def test_all_links_alive(client):

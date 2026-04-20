@@ -1,8 +1,5 @@
 name: Production Snapshot Branch Test Verification
 
-env:
-    "INTEGRATION_TESTING" : "true"
-
 on:
     pull_request: 
         branches:
