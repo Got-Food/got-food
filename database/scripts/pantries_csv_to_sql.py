@@ -4,16 +4,6 @@ Note that this does not handle pantries that have multiple open
 hour ranges in a single day, defined in their comments section.
 For those pantries, manual creation of the DDL commands inserting the
 data into the pantry_hours table is required.
-
-Also make note here that I am manually inserting the "id" field for each entry.
-Even though we have defined in our schema that PostgreSQL will automatically
-serialize this field if an entry does not specify "id" when inserting, this
-doesn't stop duplicate entries. Basically, if two entries specify the exact
-same (url, name, ..., created_at) upon entry, as might be the case in an
-accidental duplicate insert command, PostgreSQL will allow the insertion with
-a serialized ID. So, here I specify the "id" field alongside the
-ON CONFLICT DO NOTHING modifier when inserting to prevent accidentally inserting
-a duplicate entry.
 """
 
 import csv
@@ -246,6 +236,9 @@ def insert_pantry_hours(
 
 
 def main(filename: str = "./pantries.csv") -> None:
+    """Opens the input file with name filename and parses it to a .sql
+    initialization file with name OUTPUT_FILE_PATH.
+    """
     with (
         open(filename, "r", encoding="utf-8") as f_in,
         open(OUTPUT_FILE_PATH, "w+", encoding="utf-8") as f_out,
