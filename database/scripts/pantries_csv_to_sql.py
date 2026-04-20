@@ -23,7 +23,7 @@ import typing
 
 # Note: 02 is prepended to the file path to ensure that this insertion
 # file comes after defining the database schema.
-OUTPUT_FILE_PATH = "../backend/db-init/02_initial_pantries_and_hours.sql"
+OUTPUT_FILE_PATH = "02_data.sql"
 
 # Template used to insert entries into the pantries table.
 INSERT_PANTRY_TEMPLATE = """
@@ -245,10 +245,10 @@ def insert_pantry_hours(
     )
 
 
-def main() -> None:
+def main(filename: str = "./pantries.csv") -> None:
     with (
-        open("./pantries.csv", "r", encoding="utf-8") as f_in,
-        open(OUTPUT_FILE_PATH, "w", encoding="utf-8") as f_out,
+        open(filename, "r", encoding="utf-8") as f_in,
+        open(OUTPUT_FILE_PATH, "w+", encoding="utf-8") as f_out,
     ):
         f_in = csv.reader(f_in)
         # Skip CSV header
@@ -315,7 +315,13 @@ def main() -> None:
             insert_pantry_hours(f_out, pid, "FRIDAY", open_f, close_f)
             insert_pantry_hours(f_out, pid, "SATURDAY", open_sa, close_sa)
             insert_pantry_hours(f_out, pid, "SUNDAY", open_su, close_su)
+    print(
+        f'\n[*] Your file has been created at {OUTPUT_FILE_PATH}. Remember to move it into the "init" directory to properly initialize the database on next boot.\n'
+    )
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 2:
+        main(sys.argv[2])
+    else:
+        main()
