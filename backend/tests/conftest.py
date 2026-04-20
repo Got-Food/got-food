@@ -1,5 +1,4 @@
 import pytest
-from flask import Flask
 from app import create_app, database as db
 from unittest.mock import patch
 
@@ -24,16 +23,18 @@ def client(app):
 def runner(app):
     return app.test_cli_runner()
 
+
 def bind_commit_to_savepoint():
     # flush to a nested savepoint instead of real commit
-    db.session.begin_nested()  
+    db.session.begin_nested()
+
 
 @pytest.fixture(autouse=True)
 def rollback_after_test(app):
     with app.app_context():
         db.session.begin_nested()
 
-        with patch.object(db.session, 'commit', bind_commit_to_savepoint):
+        with patch.object(db.session, "commit", bind_commit_to_savepoint):
             yield
 
         # roll back DB changes
