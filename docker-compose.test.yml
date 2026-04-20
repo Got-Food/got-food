@@ -9,6 +9,7 @@ services:
       - DATABASE_URL=postgresql://test:test@db_test:5432/db_test
       - REDIS_URL=redis://redis_test:6379
       - REDIS_CACHE_TIMEOUT=300
+      - CI=${CI}
     depends_on:
       - redis_test
 
