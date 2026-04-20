@@ -1,8 +1,13 @@
-FROM node:20-alpine
+# build stage
+FROM node:20 AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 RUN npm audit fix
 COPY . .
-EXPOSE 5173
-CMD ["npm", "run", "dev"]
+RUN npm run build
+
+# prod stage
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80
