@@ -1,28 +1,26 @@
 services:
   frontend:
     build: ./frontend
+    environment:
+      - CHOKIDAR_USEPOLLING=true
     ports:
       - "5173:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    environment:
-      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend
 
   backend:
     build: ./backend
+    environment:
+      - DATABASE_URL=postgresql://dev_user:dev_password@db:5432/gotfood_dev_database
+      - REDIS_URL=redis://redis:6379
+      - REDIS_CACHE_TIMEOUT=300
     ports:
       - "5000:5000"
     volumes:
-      - ./backend:/app
-    environment:
-      - FLASK_APP=app.py
-      - FLASK_ENV=development
-      - DATABASE_URL=postgresql://user:password@db:5432/foodbank_db
-      - REDIS_URL=redis://redis:6379
-      - REDIS_CACHE_TIMEOUT=300
+      - ./backend:/server
     depends_on:
       - redis
 
@@ -34,13 +32,6 @@ services:
   db:
     build: ./database
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=foodbank_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - db-persistent-storage:/var/lib/postgresql/data
-
-volumes:
-  db-persistent-storage:
+      - POSTGRES_USER=dev_user
+      - POSTGRES_PASSWORD=dev_password
+      - POSTGRES_DB=gotfood_dev_database
