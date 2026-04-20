@@ -1,5 +1,7 @@
 import validators as val
 import requests
+import pytest
+import os
 
 
 def test_all_links_valid(client):
@@ -18,6 +20,10 @@ def test_all_links_valid(client):
             raise e
 
 
+@pytest.mark.skipif(
+    os.environ.get("CI") == "true",
+    reason="Link checks are unreliable in GitHub CI tests. Check results manually to verify whether or not a URL is dead.",
+)
 def test_all_links_alive(client):
     # Codes in client/server error range that do not indicate dead links
     ERROR_CODE_EXCEPTIONS = {405, 406, 429, 503}
