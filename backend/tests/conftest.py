@@ -19,11 +19,6 @@ def client(app):
     return app.test_client()
 
 
-@pytest.fixture()
-def runner(app):
-    return app.test_cli_runner()
-
-
 def bind_commit_to_savepoint():
     # flush to a nested savepoint instead of real commit
     db.session.begin_nested()

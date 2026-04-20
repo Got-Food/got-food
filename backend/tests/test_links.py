@@ -39,6 +39,11 @@ def test_all_links_alive(client):
     dead_links = []
     for pantry in data:
         response = requests.get(pantry["url"], headers=HEADERS)
-        if response.status_code >= 400 and response.status_code not in ERROR_CODE_EXCEPTIONS:
+        if (
+            response.status_code >= 400
+            and response.status_code not in ERROR_CODE_EXCEPTIONS
+        ):
             dead_links.append((pantry["url"], response.status_code))
-    assert len(dead_links) == 0, f"ERROR: The following URLs returned status codes indicating dead links. Check manually:\n{dead_links}"
+    assert (
+        len(dead_links) == 0
+    ), f"ERROR: The following URLs returned status codes indicating dead links. Check manually:\n{dead_links}"

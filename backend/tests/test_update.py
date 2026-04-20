@@ -2,6 +2,7 @@
 # PUT /api/pantries/<id>
 # -------------------------
 
+
 def test_put_pantry_not_found(client):
     response = client.put("/api/pantries/999999", data={"name": "New Name"})
     assert response.status_code == 404
@@ -74,7 +75,9 @@ def test_put_pantry_updates_has_variable_hours(client):
 
 
 def test_put_pantry_updates_supported_diets(client):
-    response = client.put("/api/pantries/1", data={"supported_diets": ["HALAL", "VEGAN"]})
+    response = client.put(
+        "/api/pantries/1", data={"supported_diets": ["HALAL", "VEGAN"]}
+    )
     assert response.status_code == 200
     assert response.get_json()["supported_diets"] == ["HALAL", "VEGAN"]
 
@@ -101,10 +104,13 @@ def test_put_pantry_malformed_state_too_long(client):
 
 
 def test_put_pantry_coordinates_outside_virginia(client):
-    response = client.put("/api/pantries/1", data={
-        "latitude": 47.605356379302464,
-        "longitude": -122.33293685730997,
-    })
+    response = client.put(
+        "/api/pantries/1",
+        data={
+            "latitude": 47.605356379302464,
+            "longitude": -122.33293685730997,
+        },
+    )
     assert response.status_code == 400
 
 
@@ -121,6 +127,7 @@ def test_put_pantry_does_not_change_unspecified_fields(client):
 # PUT /api/pantries/<id>/hours/<hours_id>
 # -------------------------
 
+
 def test_put_hours_not_found(client):
     response = client.put("/api/pantries/1/hours/999999", data={"status": "CLOSED"})
     assert response.status_code == 404
@@ -134,13 +141,17 @@ def test_put_hours_wrong_pantry_id(client):
 
 def test_put_hours_returns_200(client):
     hours = client.get("/api/pantries/1/hours").get_json()[0]
-    response = client.put(f"/api/pantries/1/hours/{hours['id']}", data={"status": "CLOSED"})
+    response = client.put(
+        f"/api/pantries/1/hours/{hours['id']}", data={"status": "CLOSED"}
+    )
     assert response.status_code == 200
 
 
 def test_put_hours_updates_status(client):
     hours = client.get("/api/pantries/1/hours").get_json()[0]
-    response = client.put(f"/api/pantries/1/hours/{hours['id']}", data={"status": "UNKNOWN"})
+    response = client.put(
+        f"/api/pantries/1/hours/{hours['id']}", data={"status": "UNKNOWN"}
+    )
     assert response.get_json()["status"] == "UNKNOWN"
 
 

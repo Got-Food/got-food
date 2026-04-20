@@ -18,7 +18,7 @@ HOURS_VALID_MANDATORY_DATA = {
     "pantry_id": 1,
     "day_of_week": "MONDAY",
     "status": "OPEN",
-    "open_time" : "7:00 AM"
+    "open_time": "7:00 AM",
 }
 
 
@@ -49,12 +49,14 @@ def test_pantries_mandatory_fields_all_valid(client):
     assert response.status_code == 201
     assert response.json["name"] == "Test Creation Pantry"
 
+
 def test_pantries_malformed_name_max_len(client):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     # Test max string length constraint
     data["name"] = "NULL" * (255 // 4 + 1)
     response = client.post("/api/pantries", data=data)
     assert response.status_code == 400
+
 
 def test_pantries_malformed_address_max_len(client):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
@@ -76,11 +78,13 @@ def test_pantries_malformed_state_max_len(client):
     response = client.post("/api/pantries", data=data)
     assert response.status_code == 400
 
+
 def test_pantries_malformed_zip_max_len(client):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["zip"] = "X" * 12
     response = client.post("/api/pantries", data=data)
     assert response.status_code == 400
+
 
 def test_pantries_malformed_latitude_max_len(client):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
@@ -141,6 +145,7 @@ def test_pantries_eligibility_violating_constraint(client):
     response = client.post("/api/pantries", data=data)
     assert response.status_code == 400
 
+
 def test_pantries_eligibility_multiple(client):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["comments"] = None
@@ -150,6 +155,7 @@ def test_pantries_eligibility_multiple(client):
     assert response.status_code == 201
     assert response.json["eligibility"] == ["24060", "24061"]
 
+
 def test_pantries_diets_multiple(client):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["comments"] = None
@@ -158,6 +164,7 @@ def test_pantries_diets_multiple(client):
     response = client.post("/api/pantries", data=data)
     assert response.status_code == 201
     assert response.json["supported_diets"] == ["HALAL", "VEGAN"]
+
 
 def test_pantries_coordinates_violating_constraint(client):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)

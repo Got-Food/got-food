@@ -50,7 +50,7 @@ def test_random_api_under_500_concurrent_users(client):
         uri = endpoint["endpoint"]
         if endpoint["identifier"]:
             uri = uri.replace("<ID>", str(random.randint(1, db_entry_ct)))
-    
+
         # Time query
         start = time.time()
         r = client.get(uri)
@@ -60,15 +60,17 @@ def test_random_api_under_500_concurrent_users(client):
         futures = [pool.submit(fetch_random) for _ in range(CONCURRENT_USERS)]
         results = [f.result() for f in as_completed(futures)]
 
-    failures  = [d for d, s in results if s != 200]
+    failures = [d for d, s in results if s != 200]
     assert not failures, f"{len(failures)} requests failed"
 
     durations = [d for d, _ in results]
     durations.sort()
     p95 = durations[int(len(durations) * 0.95)]
-    assert p95 < P95_THRESHOLD_SECONDS, (
-        f"95th percentile request took {p95:.2f}s — exceeds {P95_THRESHOLD_SECONDS}s limit"
-    )
-    assert (sum(durations) / len(durations)) < AVG_THRESHOLD_SECONDS, (
+    assert (
+        p95 < P95_THRESHOLD_SECONDS
+    ), f"95th percentile request took {p95:.2f}s — exceeds {P95_THRESHOLD_SECONDS}s limit"
+    assert (
+        sum(durations) / len(durations)
+    ) < AVG_THRESHOLD_SECONDS, (
         f"Avg. request took {p95:.2f}s — exceeds {AVG_THRESHOLD_SECONDS}s limit"
     )

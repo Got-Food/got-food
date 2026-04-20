@@ -1,17 +1,37 @@
 EXPECTED_PANTRY_KEYS = {
-    "id", "url", "name", "address", "city", "state", "zip",
-    "latitude", "longitude", "phone", "email", "eligibility",
-    "supported_diets", "comments", "created_at", "has_variable_hours", "hours",
+    "id",
+    "url",
+    "name",
+    "address",
+    "city",
+    "state",
+    "zip",
+    "latitude",
+    "longitude",
+    "phone",
+    "email",
+    "eligibility",
+    "supported_diets",
+    "comments",
+    "created_at",
+    "has_variable_hours",
+    "hours",
 }
 
 EXPECTED_HOURS_KEYS = {
-    "id", "pantry_id", "day_of_week", "status", "open_time", "close_time",
+    "id",
+    "pantry_id",
+    "day_of_week",
+    "status",
+    "open_time",
+    "close_time",
 }
 
 
 # -------------------------
 # GET /api/pantries
 # -------------------------
+
 
 def test_get_all_pantries_status(client):
     response = client.get("/api/pantries")
@@ -43,6 +63,7 @@ def test_get_all_pantries_ordered_by_id(client):
 # GET /api/pantries?zip=
 # -------------------------
 
+
 def test_filter_by_zip_returns_matches(client):
     response = client.get("/api/pantries?zip=20132")
     data = response.get_json()
@@ -60,6 +81,7 @@ def test_filter_by_zip_no_matches(client):
 # GET /api/pantries?city=
 # -------------------------
 
+
 def test_filter_by_city_returns_matches(client):
     response = client.get("/api/pantries?city=Sterling")
     data = response.get_json()
@@ -76,6 +98,7 @@ def test_filter_by_city_no_matches(client):
 # -------------------------
 # GET /api/pantries?supported_diets=
 # -------------------------
+
 
 def test_filter_by_valid_diet_returns_results(client):
     # Pantry 30 (Dar Al-Hijrah) explicitly supports HALAL
@@ -126,6 +149,7 @@ def test_filter_by_diet_with_show_unknown_includes_null_diets(client):
 # GET /api/pantries?eligibility=
 # -------------------------
 
+
 def test_filter_by_eligibility_zip_includes_any_pantries(client):
     # Pantries with eligibility=ANY should match any zip query (overlap with "ANY")
     response = client.get("/api/pantries?eligibility=20132")
@@ -148,6 +172,7 @@ def test_filter_by_eligibility_with_show_unknown_includes_null(client):
 # GET /api/pantries?varied_only=true
 # -------------------------
 
+
 def test_filter_varied_only_all_have_variable_hours(client):
     response = client.get("/api/pantries?varied_only=true")
     data = response.get_json()
@@ -160,6 +185,7 @@ def test_filter_varied_only_all_have_variable_hours(client):
 # GET /api/pantries?open_now=true
 # -------------------------
 
+
 def test_filter_open_now_returns_200(client):
     response = client.get("/api/pantries?open_now=true")
     assert response.status_code == 200
@@ -169,6 +195,7 @@ def test_filter_open_now_returns_200(client):
 # -------------------------
 # GET /api/pantries/<id>
 # -------------------------
+
 
 def test_get_pantry_by_id_status(client):
     response = client.get("/api/pantries/1")
@@ -209,6 +236,7 @@ def test_get_pantry_by_id_invalid_id_type(client):
 # GET /api/pantries/<id>/hours
 # -------------------------
 
+
 def test_get_hours_status(client):
     response = client.get("/api/pantries/1/hours")
     assert response.status_code == 200
@@ -241,7 +269,15 @@ def test_get_hours_seven_days_seeded(client):
 
 
 def test_get_hours_valid_day_of_week_values(client):
-    valid_days = {"SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"}
+    valid_days = {
+        "SUNDAY",
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+    }
     response = client.get("/api/pantries/1/hours")
     data = response.get_json()
     for hour in data:
