@@ -105,5 +105,5 @@
 }
 
 .menu-item.flash {
-  animation: glow 1s ease-out forwards;
+  animation: glow 5s ease-out forwards;
 }

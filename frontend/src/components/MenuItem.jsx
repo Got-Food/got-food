@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircleQuestion } from "@fortawesome/free-solid-svg-icons";
+import { faMap } from "@fortawesome/free-solid-svg-icons";
 import "../styles/MenuItem.css";
 import { getCurrentDay } from "../utils/get_current_day";
 import { PantryInfoModal } from "./PantryInfoModal";
 
-export function MenuItem({ details, flash }) {
+export function MenuItem({ details, flash, onSelect }) {
   const today = getCurrentDay();
   const todayHours = details.hours?.find((h) => h.day_of_week === today);
   const status =
@@ -30,6 +30,10 @@ export function MenuItem({ details, flash }) {
         onMouseDown={() => setActive(true)}
         onMouseUp={() => setActive(false)}
         onMouseLeave={() => setActive(false)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowInfo(true);
+        }}
       >
         <button
           className={`menu-item-star-btn${starred ? " starred" : ""}`}
@@ -56,14 +60,11 @@ export function MenuItem({ details, flash }) {
           className="menu-item-info-btn"
           onClick={(e) => {
             e.stopPropagation();
-            setShowInfo(true);
+            onSelect?.();
           }}
-          title="More info"
+          title="Select pantry"
         >
-          <FontAwesomeIcon
-            className="menu-item-info-icon"
-            icon={faCircleQuestion}
-          />
+          <FontAwesomeIcon className="menu-item-info-icon" icon={faMap} />
         </button>
       </div>
 

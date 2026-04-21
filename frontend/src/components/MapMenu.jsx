@@ -2,7 +2,12 @@ import "../styles/MapMenu.css";
 import { useEffect, useState, useRef } from "react";
 import { MenuItem } from "./MenuItem";
 
-export function MapMenu({ items = [], onSelectPantry, pantrySelection }) {
+export function MapMenu({
+  items = [],
+  onSelectPantry,
+  pantrySelection,
+  selectionKey,
+}) {
   const [flashId, setFlashId] = useState(null);
   const flashTimeoutRef = useRef(null);
 
@@ -19,7 +24,7 @@ export function MapMenu({ items = [], onSelectPantry, pantrySelection }) {
       setTimeout(() => {
         setFlashId(pantrySelection.id);
         flashTimeoutRef.current = setTimeout(() => setFlashId(null), 2000);
-      }, 50); // 👈 increase from 0 to 50 to ensure null render happens first
+      }, 50);
     };
 
     const elRect = el.getBoundingClientRect();
@@ -61,7 +66,7 @@ export function MapMenu({ items = [], onSelectPantry, pantrySelection }) {
         setFlashId(null);
       };
     }
-  }, [pantrySelection]);
+  }, [pantrySelection, selectionKey]);
 
   return (
     <div className="map-menu-card">
@@ -73,8 +78,12 @@ export function MapMenu({ items = [], onSelectPantry, pantrySelection }) {
 
       <div className="map-menu-list">
         {items.map((item) => (
-          <div key={item.id} onClick={() => onSelectPantry?.(item)}>
-            <MenuItem details={item} flash={item.id === flashId} />
+          <div key={item.id}>
+            <MenuItem
+              details={item}
+              flash={item.id === flashId}
+              onSelect={() => onSelectPantry?.(item)}
+            />
           </div>
         ))}
       </div>
