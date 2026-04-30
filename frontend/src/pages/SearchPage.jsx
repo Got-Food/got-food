@@ -59,7 +59,6 @@ function SearchPage() {
     let filtered;
 
     if (showOpen && !noShowVaried) {
-      // Open pantries + varied hours pantries merged
       const [openData, variedData] = await Promise.all([
         getPantries(true, ...sharedArgs, false),
         getPantries(false, ...sharedArgs, true),
@@ -72,17 +71,18 @@ function SearchPage() {
         return true;
       });
     } else if (showOpen && noShowVaried) {
-      // Open pantries only, no varied
       const data = await getPantries(true, ...sharedArgs, false);
       if (!data) return;
       filtered = data;
     } else {
-      // All pantries, optionally strip varied
       const data = await getPantries(false, ...sharedArgs, false);
       if (!data) return;
-      filtered = noShowVaried
-        ? data.filter((p) => !p.has_variable_hours)
-        : data;
+      filtered = data;
+    }
+
+    // Removes all variable hour pantries here if checked
+    if (noShowVaried) {
+      filtered = filtered.filter((p) => !p.has_variable_hours);
     }
 
     if (searchLocation) {
