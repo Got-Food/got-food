@@ -7,6 +7,9 @@ export function MapMenu({
   onSelectPantry,
   pantrySelection,
   selectionKey,
+  isAdmin,
+  onEditPantry,
+  onDeletePantry,
 }) {
   const [flashId, setFlashId] = useState(null);
   const flashTimeoutRef = useRef(null);
@@ -83,6 +86,9 @@ export function MapMenu({
               details={item}
               flash={item.id === flashId}
               onSelect={() => onSelectPantry?.(item)}
+              isAdmin={isAdmin}
+              onEdit={onEditPantry}
+              onDelete={onDeletePantry}
             />
           </div>
         ))}

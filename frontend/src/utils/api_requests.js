@@ -231,48 +231,53 @@ export async function getPantriesThatSupportDiets(diets) {
  *  has_variable_hours: false,
  * });
  */
+function getToken() {
+  return localStorage.getItem("gf_token");
+}
+
+function authHeaders() {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export async function addPantry(jsonParams) {
-  // Assemble form data based on object key/values
   const formData = new FormData();
   Object.entries(jsonParams).forEach(([k, v]) => {
     formData.append(k, v);
   });
   const res = await fetch("/api/pantries", {
     method: "POST",
+    headers: authHeaders(),
     body: formData,
   });
-  return await res.json();
+  return { ok: res.ok, status: res.status, data: await res.json() };
 }
 
-/**
- * Deletes the pantry with the given pantryId from the database.
- *
- * @param {number} pantryId - The pantry ID to delete from the database.
- * @returns {boolean} True if the delete was successful, false if not/if the
- * ID was invalid.
- */
+export async function updatePantry(pantryId, jsonParams) {
+  const formData = new FormData();
+  Object.entries(jsonParams).forEach(([k, v]) => {
+    formData.append(k, v);
+  });
+  const res = await fetch("/api/pantries/" + pantryId, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: formData,
+  });
+  return { ok: res.ok, status: res.status, data: await res.json() };
+}
+
 export async function deletePantry(pantryId) {
-  const res = await fetch("/api/pantries/" + pantryId, { method: "DELETE" });
-  return res.status === 200 ? true : false;
+  const res = await fetch("/api/pantries/" + pantryId, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  return res.status === 200;
 }
 
-/**
- * Deletes a specified hourly range with ID hourlyRangeID from its corresponding
- * pantry entry, having pantry ID pantryId. hourlyRangeID can be obtained from
- * looking at a pantry's hours entries.
- * 
- * @param {number} pantryId - The ID of the pantry that contains the hourly range entry. 
- * @param {number} hourlyRangeId - The unique ID of the hourly range to delete.
- * @returns {boolean} True if the delete was successful, false otherwise.
- * @example
- * const hours = await getPantryHours(1);
- * const wasDeleted = await deleteHourlyRangeFromPantry(1, hours[0]["id"]);
- * const newHours = await getPantryHours(1);
- */
 export async function deleteHourlyRangeFromPantry(pantryId, hourlyRangeId) {
   const res = await fetch(
     "/api/pantries/" + pantryId + "/hours/" + hourlyRangeId,
-    { method: "DELETE" },
+    { method: "DELETE", headers: authHeaders() },
   );
-  return res.status === 200 ? true : false;
+  return res.status === 200;
 }

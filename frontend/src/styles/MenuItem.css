@@ -107,3 +107,34 @@
 .menu-item.flash {
   animation: glow 5s ease-out forwards;
 }
+
+.menu-item-admin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.menu-item-admin-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.menu-item-admin-btn:hover {
+  opacity: 0.8;
+}
+
+.menu-item-edit-btn {
+  background: #861F41;
+  color: white;
+}
+
+.menu-item-delete-btn {
+  background: #fee2e2;
+  color: #dc2626;
+}
