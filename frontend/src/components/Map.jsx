@@ -8,6 +8,7 @@ import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
 import { getCurrentDay } from "../utils/get_current_day";
+import { getOpenStatus } from "../utils/get_open_status";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -60,7 +61,26 @@ function FlyToMarker({ selectedPantry }) {
   return null;
 }
 
-function DisplayMap({ pantries, selectedPantry, onSelectPantry }) {
+function FlyToSearch({ searchCoords }) {
+  const map = useMap();
+  useEffect(() => {
+    if (searchCoords?.lat && searchCoords?.lon) {
+      map.flyTo(
+        [parseFloat(searchCoords.lat), parseFloat(searchCoords.lon)],
+        12,
+        { duration: 1.2 },
+      );
+    }
+  }, [searchCoords, map]);
+  return null;
+}
+
+function DisplayMap({
+  pantries,
+  selectedPantry,
+  onSelectPantry,
+  searchCoords,
+}) {
   const DEFAULT_CENTER = [38.8462, -77.3064];
   const DEFAULT_ZOOM = 12;
 
@@ -100,16 +120,9 @@ function DisplayMap({ pantries, selectedPantry, onSelectPantry }) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <FlyToMarker selectedPantry={selectedPantry} />
+        <FlyToSearch searchCoords={searchCoords} />
         {pantryLocations.map((loc, index) => {
-          const todayHours = loc.hours?.find(
-            (h) => h.day_of_week === todayName,
-          );
-          const status =
-            !todayHours || todayHours.status === "CLOSED"
-              ? "closed"
-              : loc.has_variable_hours
-                ? "varied"
-                : "open";
+          const status = getOpenStatus(loc, todayName);
           const icon = STATUS_ICONS[status] ?? STATUS_ICONS.closed;
 
           return (

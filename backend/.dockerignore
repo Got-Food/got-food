@@ -3,3 +3,4 @@ Dockerfile.test.dockerignore
 requirements-test.txt
 tests/
 __pycache__/
+.env

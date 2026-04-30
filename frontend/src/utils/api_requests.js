@@ -260,8 +260,8 @@ export async function deletePantry(pantryId) {
  * Deletes a specified hourly range with ID hourlyRangeID from its corresponding
  * pantry entry, having pantry ID pantryId. hourlyRangeID can be obtained from
  * looking at a pantry's hours entries.
- * 
- * @param {number} pantryId - The ID of the pantry that contains the hourly range entry. 
+ *
+ * @param {number} pantryId - The ID of the pantry that contains the hourly range entry.
  * @param {number} hourlyRangeId - The unique ID of the hourly range to delete.
  * @returns {boolean} True if the delete was successful, false otherwise.
  * @example
@@ -275,4 +275,22 @@ export async function deleteHourlyRangeFromPantry(pantryId, hourlyRangeId) {
     { method: "DELETE" },
   );
   return res.status === 200 ? true : false;
+}
+
+/**
+ * Find the latitude and longitude of a given address using Geo Code
+ *
+ * @param {string} address - The address that we need the coordinates for.
+ * @returns {Object} A JSON object with the coordinates lat and long
+ * @example
+ * {
+ *  "lat": 12.3456,
+ *  "lon": -12.3456
+ * }
+ */
+export async function getCoords(address) {
+  const res = await fetch(
+    `/api/geocode?address=${encodeURIComponent(address)}`,
+  );
+  return await res.json();
 }

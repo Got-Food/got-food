@@ -4,6 +4,8 @@ from flask import Flask
 from .cache import cache
 from .database import database
 
+from dotenv import load_dotenv
+load_dotenv(override=False)
 
 def create_app() -> Flask:
     """An app factory that returns a configured Flask application.

@@ -5,6 +5,8 @@ const MapFilters = ({ onSearch, pantries }) => {
   const [searchLocation, setSearchLocation] = useState("");
   const [kosher, setKosher] = useState(false);
   const [halal, setHalal] = useState(false);
+  const [vegan, setVegan] = useState(false);
+  const [vegetarian, setVegetarian] = useState(false);
   const [residentialZip, setResidentialZip] = useState("");
   const [showOpen, setShowOpen] = useState(false);
   const [noShowVaried, setNoShowVaried] = useState(false);
@@ -15,6 +17,8 @@ const MapFilters = ({ onSearch, pantries }) => {
       searchLocation,
       kosher,
       halal,
+      vegan,
+      vegetarian,
       residentialZip,
       showOpen,
       noShowVaried,
@@ -59,7 +63,8 @@ const MapFilters = ({ onSearch, pantries }) => {
             {activeSuggestions.map((s) => (
               <li
                 key={s}
-                onMouseDown={() => {
+                onMouseDown={(e) => {
+                  e.preventDefault();
                   setSearchLocation(s);
                 }}
               >
@@ -120,6 +125,54 @@ const MapFilters = ({ onSearch, pantries }) => {
             )}
           </span>
           <span className="filter-checkbox-text">Halal</span>
+        </label>
+
+        <label className="filter-checkbox-label">
+          <input
+            type="checkbox"
+            checked={vegan}
+            onChange={(e) => setVegan(e.target.checked)}
+            className="filter-checkbox-input"
+          />
+          <span className={`filter-custom-checkbox${vegan ? " checked" : ""}`}>
+            {vegan && (
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                <path
+                  d="M2 6l3 3 5-5"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </span>
+          <span className="filter-checkbox-text">Vegan</span>
+        </label>
+
+        <label className="filter-checkbox-label">
+          <input
+            type="checkbox"
+            checked={vegetarian}
+            onChange={(e) => setVegetarian(e.target.checked)}
+            className="filter-checkbox-input"
+          />
+          <span
+            className={`filter-custom-checkbox${vegetarian ? " checked" : ""}`}
+          >
+            {vegetarian && (
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                <path
+                  d="M2 6l3 3 5-5"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </span>
+          <span className="filter-checkbox-text">Vegetarian</span>
         </label>
       </div>
 

@@ -5,6 +5,8 @@ import { MdEmail, MdPhone } from "react-icons/md";
 import { HiOutlineLocationMarker } from "react-icons/hi";
 import { IoLink } from "react-icons/io5";
 import { FaRegCommentDots, FaClock } from "react-icons/fa";
+import { getOpenStatus } from "../utils/get_open_status";
+import { STATUS_LABELS } from "../utils/get_open_status";
 
 const DAYS_ORDER = [
   "MONDAY",
@@ -19,37 +21,17 @@ const DAYS_ORDER = [
 export function PantryInfoModal({ details, onClose }) {
   if (!details) return null;
 
-  const {
-    name,
-    address,
-    city,
-    zip,
-    url,
-    phone,
-    email,
-    comments,
-    hours,
-    state,
-    has_variable_hours,
-  } = details;
-
   const todayName = getCurrentDay();
-  const todayHours = hours?.find((h) => h.day_of_week === todayName);
-  const status =
-    !todayHours || todayHours.status === "CLOSED"
-      ? "closed"
-      : has_variable_hours
-        ? "varied"
-        : "open";
+  const status = getOpenStatus(details, todayName);
 
   const sortedHours = DAYS_ORDER.map((day) =>
-    hours?.find((h) => h.day_of_week === day),
+    details.hours?.find((h) => h.day_of_week === day),
   ).filter(Boolean);
 
   const statusLabel = {
-    open: { text: "Open", className: "status-open" },
-    closed: { text: "Closed", className: "status-closed" },
-    varied: { text: "Hours Varied", className: "status-varied" },
+    open: { text: STATUS_LABELS.open, className: "status-open" },
+    closed: { text: STATUS_LABELS.closed, className: "status-closed" },
+    varied: { text: STATUS_LABELS.varied, className: "status-varied" },
   }[status] ?? { text: "Status Unknown", className: "status-unknown" };
 
   return createPortal(
@@ -64,25 +46,32 @@ export function PantryInfoModal({ details, onClose }) {
 
         <div className="pantry-modal-body">
           {/* Location */}
-          <div className="pantry-modal-section" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+          <div
+            className="pantry-modal-section"
+            style={{
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "flex-start" }}>
               <span className="pantry-modal-icon">
                 <HiOutlineLocationMarker />
               </span>
               <span className="pantry-modal-value">
-                <span className="pantry-location-line">{address}</span>
+                <span className="pantry-location-line">{details.address}</span>
                 <span className="pantry-location-line">
-                  {city}, {state}, {zip}
+                  {details.city}, {details.state}, {details.zip}
                 </span>
               </span>
             </div>
-          <a href={`https://www.google.com/maps?q=${details.latitude},${details.longitude}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="pantry-directions-link"
+            <a
+              href={`https://www.google.com/maps?q=${details.latitude},${details.longitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="pantry-directions-link"
             >
-            Get Directions
-          </a>
+              Get Directions
+            </a>
           </div>
           {/* Hours */}
           {sortedHours.length > 0 && (
@@ -134,54 +123,54 @@ export function PantryInfoModal({ details, onClose }) {
           )}
 
           {/* Website */}
-          {url && (
+          {details.url && (
             <div className="pantry-modal-section">
               <span className="pantry-modal-icon">
                 <IoLink />
               </span>
               <a
                 className="pantry-modal-link"
-                href={url}
+                href={details.url}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                {url}
+                {details.url}
               </a>
             </div>
           )}
 
           {/* Phone */}
-          {phone && (
+          {details.phone && (
             <div className="pantry-modal-section">
               <span className="pantry-modal-icon">
                 <MdPhone />
               </span>
-              <a className="pantry-modal-link" href={`tel:${phone}`}>
-                {phone}
+              <a className="pantry-modal-link" href={`tel:${details.phone}`}>
+                {details.phone}
               </a>
             </div>
           )}
 
           {/* Email */}
-          {email && (
+          {details.email && (
             <div className="pantry-modal-section">
               <span className="pantry-modal-icon">
                 <MdEmail />
               </span>
-              <a className="pantry-modal-link" href={`mailto:${email}`}>
-                {email}
+              <a className="pantry-modal-link" href={`mailto:${details.email}`}>
+                {details.email}
               </a>
             </div>
           )}
 
           {/* Comments */}
-          {comments && (
+          {details.comments && (
             <div className="pantry-modal-section">
               <span className="pantry-modal-icon">
                 <FaRegCommentDots />
               </span>
               <span className="pantry-modal-value pantry-modal-comments">
-                {comments}
+                {details.comments}
               </span>
             </div>
           )}

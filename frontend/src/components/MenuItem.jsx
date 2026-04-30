@@ -4,19 +4,12 @@ import { faMap } from "@fortawesome/free-solid-svg-icons";
 import "../styles/MenuItem.css";
 import { getCurrentDay } from "../utils/get_current_day";
 import { PantryInfoModal } from "./PantryInfoModal";
+import { getOpenStatus, STATUS_LABELS } from "../utils/get_open_status";
 
 export function MenuItem({ details, flash, onSelect }) {
   const today = getCurrentDay();
-  const todayHours = details.hours?.find((h) => h.day_of_week === today);
-  const status =
-    !todayHours || todayHours.status === "CLOSED"
-      ? "closed"
-      : details.has_variable_hours
-        ? "varied"
-        : "open";
-  const statusLabel =
-    { open: "Open", closed: "Closed", varied: "Hours Varied" }[status] ??
-    "Closed";
+  const status = getOpenStatus(details, today);
+  const statusLabel = STATUS_LABELS[status] ?? "Closed";
 
   const [starred, setStarred] = useState(false);
   const [active, setActive] = useState(false);

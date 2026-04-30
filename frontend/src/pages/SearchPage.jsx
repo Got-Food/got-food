@@ -4,14 +4,14 @@ import Header from "../components/Header";
 import Map from "../components/Map";
 import Filter from "../components/MapFilters";
 import Menu from "../components/MapMenu";
-import { getAllPantries, getPantries } from "../utils/api_requests";
-import { STATE_NAMES } from "../utils/state_names";
+import { getAllPantries, getPantries, getCoords } from "../utils/api_requests";
 
 function SearchPage() {
   const [allPantries, setAllPantries] = useState([]);
   const [pantries, setPantries] = useState([]);
   const [selectedPantry, setSelectedPantry] = useState(null);
   const [pantrySelection, setPantrySelection] = useState(null);
+  const [coords, setCoords] = useState(null);
 
   useEffect(() => {
     getAllPantries().then((data) => {
@@ -22,10 +22,12 @@ function SearchPage() {
     });
   }, []);
 
-  const handleSearch = ({
+  const handleSearch = async ({
     searchLocation,
     kosher,
     halal,
+    vegan,
+    vegetarian,
     showOpen,
     noShowVaried,
     residentialZip,
@@ -33,33 +35,52 @@ function SearchPage() {
     const diets = [];
     if (kosher) diets.push("KOSHER");
     if (halal) diets.push("HALAL");
+    if (vegan) diets.push("VEGAN");
+    if (vegetarian) diets.push("VEGETARIAN");
 
-    getPantries(
-      showOpen,
+    const sharedArgs = [
       residentialZip || undefined,
       diets.length > 0 ? diets : undefined,
-      true,
-    ).then((data) => {
+      true, // showUnknown
+    ];
+
+    let filtered;
+
+    if (showOpen && !noShowVaried) {
+      // Open pantries + varied hours pantries merged
+      const [openData, variedData] = await Promise.all([
+        getPantries(true, ...sharedArgs, false),
+        getPantries(false, ...sharedArgs, true),
+      ]);
+      if (!openData || !variedData) return;
+      const seen = new Set();
+      filtered = [...openData, ...variedData].filter((p) => {
+        if (seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+      });
+    } else if (showOpen && noShowVaried) {
+      // Open pantries only, no varied
+      const data = await getPantries(true, ...sharedArgs, false);
       if (!data) return;
+      filtered = data;
+    } else {
+      // All pantries, optionally strip varied
+      const data = await getPantries(false, ...sharedArgs, false);
+      if (!data) return;
+      filtered = noShowVaried
+        ? data.filter((p) => !p.has_variable_hours)
+        : data;
+    }
 
-      let filtered = data;
+    if (searchLocation) {
+      const result = await getCoords(searchLocation);
+      setCoords(result?.lat && result?.lon ? result : null);
+    } else {
+      setCoords(null);
+    }
 
-      if (noShowVaried) {
-        filtered = filtered.filter((p) => !p.has_variable_hours);
-      }
-
-      if (searchLocation) {
-        const normalize = (s) => s.toLowerCase().replace(/[^a-z0-9\s]/g, "");
-        const query = normalize(searchLocation);
-        filtered = filtered.filter((p) => {
-          const stateName = STATE_NAMES[p.state] ?? "";
-          return [p.name, p.address, p.city, p.zip, p.state, stateName]
-            .filter(Boolean)
-            .some((field) => normalize(field).includes(query));
-        });
-      }
-      setPantries(filtered);
-    });
+    setPantries(filtered);
   };
 
   return (
@@ -91,6 +112,7 @@ function SearchPage() {
         <Map
           pantries={pantries}
           selectedPantry={selectedPantry}
+          searchCoords={coords}
           onSelectPantry={(id) =>
             setPantrySelection((prev) => ({
               id,

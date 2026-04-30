@@ -1,4 +1,6 @@
 import json
+import os
+import requests
 from flask import Blueprint, request, jsonify, abort
 from sqlalchemy.exc import IntegrityError, DataError
 from werkzeug.exceptions import HTTPException
@@ -469,3 +471,42 @@ def delete_hourly_range_by_id(pantry_id, hours_id):
     cache.delete_memoized(get_pantry_by_id, pantry_id)
     cache.delete_memoized(get_pantry_hours, pantry_id)
     return {}, 200
+
+
+#For Geo Code
+@api.route("/geocode")
+def geocode():
+    address = request.args.get("address")
+
+    if not address:
+        return jsonify({"error": "Address is required"}), 400
+    
+    #I am grabbing the GEOCODE_API_KEY from a local .env in got-food right now, not sure if this will still work after deployment
+    API_KEY = os.getenv("GEOCODE_API_KEY")
+    if not API_KEY:
+        return jsonify({"error": "Missing GEOCODE_API_KEY"}), 500
+
+    url = "https://api.geocode.farm/forward/"
+    params = {
+        "addr": address,
+        "key": API_KEY
+    }
+
+    try:
+        response = requests.get(url, params=params)
+        data = response.json()
+
+        result = data.get("RESULTS", {}).get("result", {})
+        coords = result.get("coordinates", {})
+
+        if coords:
+            return jsonify({
+                "lat": coords.get("lat"),
+                "lon": coords.get("lon"),
+                "formatted_address": result.get("address", {}).get("full_address")
+            })
+        else:
+            return jsonify({"error": "No results found"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

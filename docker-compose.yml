@@ -19,6 +19,7 @@ services:
       - DATABASE_URL=postgresql://dev_user:dev_password@db:5432/gotfood_dev_database
       - REDIS_URL=redis://redis:6379
       - REDIS_CACHE_TIMEOUT=300
+      - GEOCODE_API_KEY=${GEOCODE_API_KEY}
     ports:
       - "5000:5000"
     volumes:
