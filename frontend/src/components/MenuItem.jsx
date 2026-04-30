@@ -6,7 +6,7 @@ import { getCurrentDay } from "../utils/get_current_day";
 import { PantryInfoModal } from "./PantryInfoModal";
 import { getOpenStatus, STATUS_LABELS } from "../utils/get_open_status";
 
-export function MenuItem({ details, flash, onSelect }) {
+export function MenuItem({ details, flash, onSelect, isAdmin, onEdit, onDelete }) {
   const today = getCurrentDay();
   const status = getOpenStatus(details, today);
   const statusLabel = STATUS_LABELS[status] ?? "Closed";
@@ -59,6 +59,25 @@ export function MenuItem({ details, flash, onSelect }) {
         >
           <FontAwesomeIcon className="menu-item-info-icon" icon={faMap} />
         </button>
+
+        {isAdmin && (
+          <div className="menu-item-admin-actions" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="menu-item-admin-btn menu-item-edit-btn"
+              onClick={() => onEdit?.(details)}
+              title="Edit pantry"
+            >
+              Edit
+            </button>
+            <button
+              className="menu-item-admin-btn menu-item-delete-btn"
+              onClick={() => onDelete?.(details.id)}
+              title="Delete pantry"
+            >
+              Delete
+            </button>
+          </div>
+        )}
       </div>
 
       {showInfo && (

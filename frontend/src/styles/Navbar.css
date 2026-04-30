@@ -1,31 +1,110 @@
 .navbar {
   background: #861f41;
-  padding: 1rem 2rem;
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .nav-links {
   display: flex;
-  justify-content: space-around;
   align-items: center;
   list-style: none;
   margin: 0;
   padding: 0;
+  gap: 0.25rem;
 }
 
 .nav-links a {
   color: #ffffff;
   text-decoration: none;
   font-weight: 500;
-  padding: 0.6rem 1.2rem;
+  padding: 0.5rem 1.1rem;
   border-radius: 999px;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .nav-links a:hover {
-  background-color: #af8a7a;
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .nav-links a.active {
   background-color: #ffffff;
   color: #861f41;
+}
+
+/* Auth area on the right */
+.nav-auth {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.nav-admin-badge {
+  background: #fce4ec;
+  color: #861f41;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nav-user-link {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-size: 0.9rem;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.nav-user-link:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.nav-logout-btn {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.nav-logout-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.nav-auth-link {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  transition: background 0.2s;
+}
+
+.nav-auth-link:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.nav-auth-link-primary {
+  background: #ffffff;
+  color: #861f41;
+  font-weight: 600;
+}
+
+.nav-auth-link-primary:hover {
+  background: #f5f5f5;
 }
