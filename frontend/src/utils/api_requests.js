@@ -240,28 +240,32 @@ function authHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export async function addPantry(jsonParams) {
+function toFormData(params) {
   const formData = new FormData();
-  Object.entries(jsonParams).forEach(([k, v]) => {
-    formData.append(k, v);
+  Object.entries(params).forEach(([k, v]) => {
+    if (Array.isArray(v)) {
+      v.forEach((item) => formData.append(k, item));
+    } else {
+      formData.append(k, v);
+    }
   });
+  return formData;
+}
+
+export async function addPantry(jsonParams) {
   const res = await fetch("/api/pantries", {
     method: "POST",
     headers: authHeaders(),
-    body: formData,
+    body: toFormData(jsonParams),
   });
   return { ok: res.ok, status: res.status, data: await res.json() };
 }
 
 export async function updatePantry(pantryId, jsonParams) {
-  const formData = new FormData();
-  Object.entries(jsonParams).forEach(([k, v]) => {
-    formData.append(k, v);
-  });
   const res = await fetch("/api/pantries/" + pantryId, {
     method: "PUT",
     headers: authHeaders(),
-    body: formData,
+    body: toFormData(jsonParams),
   });
   return { ok: res.ok, status: res.status, data: await res.json() };
 }
