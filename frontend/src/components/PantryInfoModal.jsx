@@ -42,7 +42,7 @@ export function PantryInfoModal({ details, onClose }) {
         </button>
 
         {/* Name */}
-        <h1 className="pantry-modal-name">{name}</h1>
+        <h1 className="pantry-modal-name">{details.name}</h1>
 
         <div className="pantry-modal-body">
           {/* Location */}

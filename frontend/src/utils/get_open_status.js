@@ -6,9 +6,9 @@
  * @returns {"open" | "closed" | "varied"}
  */
 export function getOpenStatus(pantry, todayName) {
-  if (pantry.has_variable_hours) return "varied";
-
   const todayHours = pantry.hours?.find((h) => h.day_of_week === todayName);
+
+  // If no hours entry for today, or explicitly closed
   if (!todayHours || todayHours.status === "CLOSED") return "closed";
 
   if (
@@ -18,7 +18,10 @@ export function getOpenStatus(pantry, todayName) {
   )
     return "closed";
 
-  if (!todayHours.open_time) return "open";
+  // If no open_time, the pantry is considered open all day
+  if (!todayHours.open_time) {
+    return pantry.has_variable_hours ? "varied" : "open";
+  }
 
   const now = new Date();
   const toMinutes = (timeStr) => {
@@ -35,9 +38,10 @@ export function getOpenStatus(pantry, todayName) {
     ? toMinutes(todayHours.close_time)
     : Infinity;
 
-  return nowMinutes >= openMinutes && nowMinutes < closeMinutes
-    ? "open"
-    : "closed";
+  const isWithinHours = nowMinutes >= openMinutes && nowMinutes < closeMinutes;
+
+  if (!isWithinHours) return "closed";
+  return pantry.has_variable_hours ? "varied" : "open";
 }
 
 export const STATUS_LABELS = {

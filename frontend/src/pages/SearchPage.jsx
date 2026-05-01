@@ -12,6 +12,8 @@ import {
   getCoords,
 } from "../utils/api_requests";
 import { useAuth } from "../context/AuthContext";
+import { getCurrentDay } from "../utils/get_current_day";
+import { getOpenStatus } from "../utils/get_open_status";
 
 function SearchPage() {
   const { isAdmin } = useAuth();
@@ -78,6 +80,14 @@ function SearchPage() {
       const data = await getPantries(false, ...sharedArgs, false);
       if (!data) return;
       filtered = data;
+    }
+
+    if (showOpen) {
+      const today = getCurrentDay();
+      filtered = filtered.filter((p) => {
+        const status = getOpenStatus(p, today);
+        return status === "open" || status === "varied";
+      });
     }
 
     // Removes all variable hour pantries here if checked
