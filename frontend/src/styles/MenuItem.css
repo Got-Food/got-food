@@ -130,11 +130,22 @@
 }
 
 .menu-item-edit-btn {
-  background: #861F41;
+  background: #861f41;
   color: white;
 }
 
 .menu-item-delete-btn {
   background: #fee2e2;
   color: #dc2626;
+}
+
+.menu-item-status-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.menu-item-distance {
+  font-size: 13px;
+  color: #6b7280;
 }

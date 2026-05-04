@@ -11,6 +11,8 @@ const MapFilters = ({ onSearch, pantries }) => {
   const [showOpen, setShowOpen] = useState(false);
   const [noShowVaried, setNoShowVaried] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [useRadius, setUseRadius] = useState(false);
+  const [radiusMiles, setRadiusMiles] = useState(10);
 
   const handleSearch = () => {
     onSearch({
@@ -22,6 +24,7 @@ const MapFilters = ({ onSearch, pantries }) => {
       residentialZip,
       showOpen,
       noShowVaried,
+      radiusMiles: useRadius ? radiusMiles : null,
     });
   };
 
@@ -55,7 +58,7 @@ const MapFilters = ({ onSearch, pantries }) => {
           }}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          placeholder="Address, zipcodes..."
+          placeholder="Enter your current location"
           className="filter-search-input"
         />
         {isFocused && activeSuggestions.length > 0 && (
@@ -73,6 +76,60 @@ const MapFilters = ({ onSearch, pantries }) => {
             ))}
           </ul>
         )}
+      </div>
+
+      <div className="filter-section">
+        <label className="filter-checkbox-label">
+          <input
+            type="checkbox"
+            checked={useRadius}
+            onChange={(e) => setUseRadius(e.target.checked)}
+            className="filter-checkbox-input"
+            disabled={!searchLocation.trim()}
+          />
+          <span
+            className={`filter-custom-checkbox${useRadius ? " checked" : ""}`}
+          >
+            {useRadius && (
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                <path
+                  d="M2 6l3 3 5-5"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </span>
+          <span className="filter-checkbox-text">
+            Display only those within {radiusMiles} mile
+            {radiusMiles !== 1 ? "s" : ""}
+          </span>
+        </label>
+
+        <input
+          type="range"
+          min="1"
+          max="100"
+          step="1"
+          value={radiusMiles}
+          onChange={(e) => setRadiusMiles(Number(e.target.value))}
+          className="filter-range-input"
+          disabled={!useRadius || !searchLocation.trim()}
+        />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: "0.75rem",
+            color: "#999",
+            opacity: useRadius ? 1 : 0.4,
+          }}
+        >
+          <span>1 mi</span>
+          <span>100 mi</span>
+        </div>
       </div>
 
       <div className="filter-divider" />
@@ -189,7 +246,7 @@ const MapFilters = ({ onSearch, pantries }) => {
             const onlyNumbers = e.target.value.replace(/\D/g, "").slice(0, 5);
             setResidentialZip(onlyNumbers);
           }}
-          placeholder="Zipcode..."
+          placeholder="Some pantries are restricted to specific zipcodes"
           className="filter-text-input"
         />
       </div>

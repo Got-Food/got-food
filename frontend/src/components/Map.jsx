@@ -56,7 +56,7 @@ function FlyToMarker({ selectedPantry }) {
           parseFloat(selectedPantry.latitude),
           parseFloat(selectedPantry.longitude),
         ],
-        13,
+        11,
         { duration: 1.2 },
       );
     }
@@ -70,7 +70,7 @@ function FlyToSearch({ searchCoords }) {
     if (searchCoords?.lat && searchCoords?.lon) {
       map.flyTo(
         [parseFloat(searchCoords.lat), parseFloat(searchCoords.lon)],
-        12,
+        11,
         { duration: 1.2 },
       );
     }

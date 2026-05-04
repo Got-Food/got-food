@@ -5,8 +5,17 @@ import "../styles/MenuItem.css";
 import { getCurrentDay } from "../utils/get_current_day";
 import { PantryInfoModal } from "./PantryInfoModal";
 import { getOpenStatus, STATUS_LABELS } from "../utils/get_open_status";
+import { getDistanceMiles } from "../utils/get_distance";
 
-export function MenuItem({ details, flash, onSelect, isAdmin, onEdit, onDelete }) {
+export function MenuItem({
+  details,
+  flash,
+  onSelect,
+  isAdmin,
+  onEdit,
+  onDelete,
+  searchCoords,
+}) {
   const today = getCurrentDay();
   const status = getOpenStatus(details, today);
   const statusLabel = STATUS_LABELS[status] ?? "Closed";
@@ -14,6 +23,15 @@ export function MenuItem({ details, flash, onSelect, isAdmin, onEdit, onDelete }
   const [starred, setStarred] = useState(false);
   const [active, setActive] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+
+  const distance = searchCoords
+    ? (() => {
+        const lat = parseFloat(details.latitude);
+        const lon = parseFloat(details.longitude);
+        if (isNaN(lat) || isNaN(lon)) return null;
+        return getDistanceMiles(searchCoords.lat, searchCoords.lon, lat, lon);
+      })()
+    : null;
 
   return (
     <>
@@ -44,9 +62,16 @@ export function MenuItem({ details, flash, onSelect, isAdmin, onEdit, onDelete }
 
         <div className="menu-item-text">
           <span className="menu-item-title">{details.name}</span>
-          <span className={`menu-item-status ${status ?? "closed"}`}>
-            {statusLabel}
-          </span>
+          <div className="menu-item-status-row">
+            <span className={`menu-item-status ${status ?? "closed"}`}>
+              {statusLabel}
+            </span>
+            {distance !== null && (
+              <span className="menu-item-distance">
+                {distance.toFixed(1)} mi{" "}
+              </span>
+            )}
+          </div>
         </div>
 
         <button
@@ -61,7 +86,10 @@ export function MenuItem({ details, flash, onSelect, isAdmin, onEdit, onDelete }
         </button>
 
         {isAdmin && (
-          <div className="menu-item-admin-actions" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="menu-item-admin-actions"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               className="menu-item-admin-btn menu-item-edit-btn"
               onClick={() => onEdit?.(details)}

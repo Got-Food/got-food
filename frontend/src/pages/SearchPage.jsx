@@ -14,6 +14,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { getCurrentDay } from "../utils/get_current_day";
 import { getOpenStatus } from "../utils/get_open_status";
+import { getDistanceMiles } from "../utils/get_distance";
 
 function SearchPage() {
   const { isAdmin } = useAuth();
@@ -45,6 +46,7 @@ function SearchPage() {
     showOpen,
     noShowVaried,
     residentialZip,
+    radiusMiles,
   }) => {
     const diets = [];
     if (kosher) diets.push("KOSHER");
@@ -98,6 +100,40 @@ function SearchPage() {
     if (searchLocation) {
       const result = await getCoords(searchLocation);
       setCoords(result?.lat && result?.lon ? result : null);
+
+      if (result?.lat && result?.lon) {
+        // check if distance filter is on
+        if (radiusMiles) {
+          const maxMiles = parseFloat(radiusMiles);
+          filtered = filtered.filter((p) => {
+            const lat = parseFloat(p.latitude);
+            const lon = parseFloat(p.longitude);
+            if (isNaN(lat) || isNaN(lon)) return false;
+            return (
+              getDistanceMiles(result.lat, result.lon, lat, lon) <= maxMiles
+            );
+          });
+        }
+
+        // Sort by distance
+        filtered = filtered.sort((a, b) => {
+          const distA = getDistanceMiles(
+            result.lat,
+            result.lon,
+            parseFloat(a.latitude),
+            parseFloat(a.longitude),
+          );
+          const distB = getDistanceMiles(
+            result.lat,
+            result.lon,
+            parseFloat(b.latitude),
+            parseFloat(b.longitude),
+          );
+          if (isNaN(distA)) return 1;
+          if (isNaN(distB)) return -1;
+          return distA - distB;
+        });
+      }
     } else {
       setCoords(null);
     }
@@ -165,6 +201,8 @@ function SearchPage() {
           gap: "1.5rem",
           padding: "5rem",
           alignItems: "start",
+          width: "100%",
+          boxSizing: "border-box",
         }}
       >
         <Menu
@@ -174,6 +212,7 @@ function SearchPage() {
           isAdmin={isAdmin}
           onEditPantry={(pantry) => setAdminModal({ mode: "edit", pantry })}
           onDeletePantry={handleDeletePantry}
+          searchCoords={coords}
         />
         <Map
           pantries={pantries}

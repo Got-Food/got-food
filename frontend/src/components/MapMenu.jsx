@@ -10,6 +10,7 @@ export function MapMenu({
   isAdmin,
   onEditPantry,
   onDeletePantry,
+  searchCoords,
 }) {
   const [flashId, setFlashId] = useState(null);
   const flashTimeoutRef = useRef(null);
@@ -89,6 +90,7 @@ export function MapMenu({
               isAdmin={isAdmin}
               onEdit={onEditPantry}
               onDelete={onDeletePantry}
+              searchCoords={searchCoords}
             />
           </div>
         ))}
