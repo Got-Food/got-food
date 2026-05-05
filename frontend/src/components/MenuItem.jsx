@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMap } from "@fortawesome/free-solid-svg-icons";
+import { faLocationArrow } from "@fortawesome/free-solid-svg-icons";
 import "../styles/MenuItem.css";
 import { getCurrentDay } from "../utils/get_current_day";
 import { PantryInfoModal } from "./PantryInfoModal";
@@ -20,7 +20,6 @@ export function MenuItem({
   const status = getOpenStatus(details, today);
   const statusLabel = STATUS_LABELS[status] ?? "Closed";
 
-  const [starred, setStarred] = useState(false);
   const [active, setActive] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
 
@@ -46,20 +45,6 @@ export function MenuItem({
           setShowInfo(true);
         }}
       >
-        <button
-          className={`menu-item-star-btn${starred ? " starred" : ""}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            setStarred((s) => !s);
-          }}
-          title={starred ? "Remove from favorites" : "Add to favorites"}
-        >
-          <FontAwesomeIcon
-            className="menu-item-star-icon"
-            icon={starred ? "fa-solid fa-star" : "fa-regular fa-star"}
-          />
-        </button>
-
         <div className="menu-item-text">
           <span className="menu-item-title">{details.name}</span>
           <div className="menu-item-status-row">
@@ -82,31 +67,34 @@ export function MenuItem({
           }}
           title="Select pantry"
         >
-          <FontAwesomeIcon className="menu-item-info-icon" icon={faMap} />
+          <FontAwesomeIcon
+            className="menu-item-info-icon"
+            icon={faLocationArrow}
+          />
         </button>
-
-        {isAdmin && (
-          <div
-            className="menu-item-admin-actions"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="menu-item-admin-btn menu-item-edit-btn"
-              onClick={() => onEdit?.(details)}
-              title="Edit pantry"
-            >
-              Edit
-            </button>
-            <button
-              className="menu-item-admin-btn menu-item-delete-btn"
-              onClick={() => onDelete?.(details.id)}
-              title="Delete pantry"
-            >
-              Delete
-            </button>
-          </div>
-        )}
       </div>
+
+      {isAdmin && (
+        <div
+          className="menu-item-admin-actions"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className="menu-item-admin-btn menu-item-edit-btn"
+            onClick={() => onEdit?.(details)}
+            title="Edit pantry"
+          >
+            Edit
+          </button>
+          <button
+            className="menu-item-admin-btn menu-item-delete-btn"
+            onClick={() => onDelete?.(details.id)}
+            title="Delete pantry"
+          >
+            Delete
+          </button>
+        </div>
+      )}
 
       {showInfo && (
         <PantryInfoModal details={details} onClose={() => setShowInfo(false)} />
