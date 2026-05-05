@@ -489,7 +489,7 @@ def geocode():
         return jsonify({"error": "Address is required"}), 400
     
     #I am grabbing the GEOCODE_API_KEY from a local .env in got-food right now, not sure if this will still work after deployment
-    API_KEY = os.getenv("GEOCODE_API_KEY")
+    API_KEY = os.environ.get("GEOCODE_API_KEY")
     if not API_KEY:
         return jsonify({"error": "Missing GEOCODE_API_KEY"}), 500
 
