@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS pantry_hours (
         OR ( 
             open_time IS NOT NULL  
             AND close_time IS NOT NULL 
-            AND open_time < close_time 
+            AND open_time <= close_time 
         ) 
     ), 
     CONSTRAINT time_range_is_unique_per_pantry UNIQUE NULLS NOT DISTINCT (

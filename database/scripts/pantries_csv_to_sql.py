@@ -13,7 +13,7 @@ import typing
 
 # Note: 02 is prepended to the file path to ensure that this insertion
 # file comes after defining the database schema.
-OUTPUT_FILE_PATH = "02_data.sql"
+OUTPUT_FILE_PATH = "03_init_data.sql"
 
 # Template used to insert entries into the pantries table.
 INSERT_PANTRY_TEMPLATE = """
@@ -192,14 +192,6 @@ def insert_pantry_hours(
         open: The opening time of the pantry.
         close: The closing time of the pantry.
     """
-    # Corrective data cleansing. If we entered into our Excel sheet that a
-    # pantry opened and closed at the same time, it's likely that the pantry
-    # managers want their members to be there right at that time. Here, we
-    # change the close time to NULL (in the DB) so that we can display
-    # to users simply that the pantry opens at the open time.
-    if open is not None and open != "CLOSED" and open == close:
-        close = None
-
     status = None
     if open is None:
         if close is None:  # Pantry did not provide time info for this day
