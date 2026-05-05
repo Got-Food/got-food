@@ -1,26 +1,37 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircleQuestion } from "@fortawesome/free-solid-svg-icons";
+import { faMap } from "@fortawesome/free-solid-svg-icons";
 import "../styles/MenuItem.css";
 import { getCurrentDay } from "../utils/get_current_day";
 import { PantryInfoModal } from "./PantryInfoModal";
+import { getOpenStatus, STATUS_LABELS } from "../utils/get_open_status";
+import { getDistanceMiles } from "../utils/get_distance";
 
-export function MenuItem({ details, flash }) {
+export function MenuItem({
+  details,
+  flash,
+  onSelect,
+  isAdmin,
+  onEdit,
+  onDelete,
+  searchCoords,
+}) {
   const today = getCurrentDay();
-  const todayHours = details.hours?.find((h) => h.day_of_week === today);
-  const status =
-    !todayHours || todayHours.status === "CLOSED"
-      ? "closed"
-      : details.has_variable_hours
-        ? "varied"
-        : "open";
-  const statusLabel =
-    { open: "Open", closed: "Closed", varied: "Hours Varied" }[status] ??
-    "Closed";
+  const status = getOpenStatus(details, today);
+  const statusLabel = STATUS_LABELS[status] ?? "Closed";
 
   const [starred, setStarred] = useState(false);
   const [active, setActive] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+
+  const distance = searchCoords
+    ? (() => {
+        const lat = parseFloat(details.latitude);
+        const lon = parseFloat(details.longitude);
+        if (isNaN(lat) || isNaN(lon)) return null;
+        return getDistanceMiles(searchCoords.lat, searchCoords.lon, lat, lon);
+      })()
+    : null;
 
   return (
     <>
@@ -30,6 +41,10 @@ export function MenuItem({ details, flash }) {
         onMouseDown={() => setActive(true)}
         onMouseUp={() => setActive(false)}
         onMouseLeave={() => setActive(false)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowInfo(true);
+        }}
       >
         <button
           className={`menu-item-star-btn${starred ? " starred" : ""}`}
@@ -47,24 +62,50 @@ export function MenuItem({ details, flash }) {
 
         <div className="menu-item-text">
           <span className="menu-item-title">{details.name}</span>
-          <span className={`menu-item-status ${status ?? "closed"}`}>
-            {statusLabel}
-          </span>
+          <div className="menu-item-status-row">
+            <span className={`menu-item-status ${status ?? "closed"}`}>
+              {statusLabel}
+            </span>
+            {distance !== null && (
+              <span className="menu-item-distance">
+                {distance.toFixed(1)} mi{" "}
+              </span>
+            )}
+          </div>
         </div>
 
         <button
           className="menu-item-info-btn"
           onClick={(e) => {
             e.stopPropagation();
-            setShowInfo(true);
+            onSelect?.();
           }}
-          title="More info"
+          title="Select pantry"
         >
-          <FontAwesomeIcon
-            className="menu-item-info-icon"
-            icon={faCircleQuestion}
-          />
+          <FontAwesomeIcon className="menu-item-info-icon" icon={faMap} />
         </button>
+
+        {isAdmin && (
+          <div
+            className="menu-item-admin-actions"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="menu-item-admin-btn menu-item-edit-btn"
+              onClick={() => onEdit?.(details)}
+              title="Edit pantry"
+            >
+              Edit
+            </button>
+            <button
+              className="menu-item-admin-btn menu-item-delete-btn"
+              onClick={() => onDelete?.(details.id)}
+              title="Delete pantry"
+            >
+              Delete
+            </button>
+          </div>
+        )}
       </div>
 
       {showInfo && (

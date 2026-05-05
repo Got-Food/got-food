@@ -16,9 +16,15 @@ services:
   backend:
     build: ./backend
     environment:
+      - FLASK_DEBUG=1
       - DATABASE_URL=postgresql://dev_user:dev_password@db:5432/gotfood_dev_database
       - REDIS_URL=redis://redis:6379
       - REDIS_CACHE_TIMEOUT=300
+      - CORS_ORIGINS=http://localhost:5173
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - SEED_ADMIN_EMAIL=${SEED_ADMIN_EMAIL}
+      - SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD}
+      - GEOCODE_API_KEY=${GEOCODE_API_KEY}
     ports:
       - "5000:5000"
     volumes:
@@ -29,7 +35,8 @@ services:
   redis:
     image: redis:alpine
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     build: ./database
@@ -37,3 +44,8 @@ services:
       - POSTGRES_USER=dev_user
       - POSTGRES_PASSWORD=dev_password
       - POSTGRES_DB=gotfood_dev_database
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev_user -d gotfood_dev_database"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

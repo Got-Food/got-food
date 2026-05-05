@@ -3,8 +3,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship
 
 from ..database import database as db
-from .enums import SupportedDiet
-from .enums import Weekday, HourlyRangeStatus
+from .enums import SupportedDiet, Weekday, HourlyRangeStatus
 
 
 class Pantries(db.Model):
@@ -33,7 +32,7 @@ class Pantries(db.Model):
         postgresql.ARRAY(db.Enum(SupportedDiet, name="supported_diet"))
     )
     comments = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.now())
+    created_at = db.Column(db.DateTime, default=datetime.now)
     has_variable_hours = db.Column(db.Boolean, nullable=False)
     hours = relationship("PantryHours")
 
@@ -107,3 +106,4 @@ class PantryHours(db.Model):
             "open_time": open_time,
             "close_time": close_time,
         }
+

@@ -22,262 +22,331 @@ HOURS_VALID_MANDATORY_DATA = {
 }
 
 
-def test_pantries_null_data(client):
-    response = client.post("/api/pantries", data=None)
+def test_pantries_null_data(client, jwt_token):
+    response = client.post(
+        "/api/pantries", data=None, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 400
 
 
-def test_pantries_mandatory_fields_some_missing(client):
+def test_pantries_mandatory_fields_some_missing(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     del data["address"]
     del data["zip"]
     del data["has_variable_hours"]
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 400
 
 
-def test_pantries_mandatory_fields_are_none(client):
+def test_pantries_mandatory_fields_are_none(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     for k in data:
         data[k] = None
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 400
 
 
-def test_pantries_mandatory_fields_all_valid(client):
-    response = client.post("/api/pantries", data=PANTRY_VALID_MANDATORY_DATA)
+def test_pantries_mandatory_fields_all_valid(client, jwt_token):
+    response = client.post(
+        "/api/pantries",
+        data=PANTRY_VALID_MANDATORY_DATA,
+        headers={"Authorization": f"Bearer {jwt_token}"},
+    )
     assert response.status_code == 201
     assert response.json["name"] == "Test Creation Pantry"
 
 
-def test_pantries_malformed_name_max_len(client):
+def test_pantries_malformed_name_max_len(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     # Test max string length constraint
     data["name"] = "NULL" * (255 // 4 + 1)
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 400
 
 
-def test_pantries_malformed_address_max_len(client):
+def test_pantries_malformed_address_max_len(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["address"] = "NULL" * (255 // 4 + 1)
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 400
 
 
-def test_pantries_malformed_city_max_len(client):
+def test_pantries_malformed_city_max_len(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["city"] = "NULL" * ((100 // 4) + 1)
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 400
 
 
-def test_pantries_malformed_state_max_len(client):
+def test_pantries_malformed_state_max_len(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["state"] = "ABC"
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 400
 
 
-def test_pantries_malformed_zip_max_len(client):
+def test_pantries_malformed_zip_max_len(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["zip"] = "X" * 12
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 400
 
 
-def test_pantries_malformed_latitude_max_len(client):
+def test_pantries_malformed_latitude_max_len(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["latitude"] = 1 * 10**20
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 400
 
 
-def test_pantries_malformed_latitude_type(client):
+def test_pantries_malformed_latitude_type(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["latitude"] = "Hello world!"
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 400
 
 
-def test_pantries_malformed_longitude_max_len(client):
+def test_pantries_malformed_longitude_max_len(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["longitude"] = 1 * 10**20
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 400
 
 
-def test_pantries_malformed_longitude_type(client):
+def test_pantries_malformed_longitude_type(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["longitude"] = "Hello world!"
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 400
 
 
-def test_pantries_malformed_has_variable_hours_type(client):
+def test_pantries_malformed_has_variable_hours_type(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["has_variable_hours"] = "Hello world!"
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 400
 
 
-def test_pantries_optional_fields_some_missing(client):
+def test_pantries_optional_fields_some_missing(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["comments"] = "Hello world!"
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 201
 
 
-def test_pantries_optional_fields_some_none(client):
+def test_pantries_optional_fields_some_none(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["comments"] = None
     data["supported_diet"] = None
     data["eligibility"] = ["20301"]
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 201
 
 
-def test_pantries_eligibility_violating_constraint(client):
+def test_pantries_eligibility_violating_constraint(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["comments"] = None
     data["supported_diets"] = None
     data["eligibility"] = "Hello world!"
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 400
 
 
-def test_pantries_eligibility_multiple(client):
+def test_pantries_eligibility_multiple(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["comments"] = None
     data["supported_diets"] = None
     data["eligibility"] = ["24060", "24061"]
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 201
     assert response.json["eligibility"] == ["24060", "24061"]
 
 
-def test_pantries_diets_multiple(client):
+def test_pantries_diets_multiple(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["comments"] = None
     data["supported_diets"] = ["Halal", "Vegan"]
     data["eligibility"] = None
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 201
     assert response.json["supported_diets"] == ["HALAL", "VEGAN"]
 
 
-def test_pantries_coordinates_violating_constraint(client):
+def test_pantries_coordinates_violating_constraint(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["latitude"] = 47.605356379302464
     data["longitude"] = -122.33293685730997
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 400
 
 
-def test_pantries_optional_fields_all_valid(client):
+def test_pantries_optional_fields_all_valid(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["comments"] = "Only open on every third Saturday of the month."
     data["supported_diets"] = ["Halal"]
     data["eligibility"] = ["20301"]
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 201
 
 
-def test_pantries_colliding_id(client):
+def test_pantries_colliding_id(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["id"] = 1
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 201
 
 
-def test_pantries_any_id(client):
+def test_pantries_any_id(client, jwt_token):
     data = deepcopy(PANTRY_VALID_MANDATORY_DATA)
     data["id"] = 10000
-    response = client.post("/api/pantries", data=data)
+    response = client.post(
+        "/api/pantries", data=data, headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 201
 
 
 # Test "PantryHours" table
-def test_hours_null_data(client):
+def test_hours_null_data(client, jwt_token):
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=None
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=None,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 400
 
 
-def test_hours_mandatory_fields_some_missing(client):
+def test_hours_mandatory_fields_some_missing(client, jwt_token):
     data = deepcopy(HOURS_VALID_MANDATORY_DATA)
     del data["pantry_id"]
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 400
 
 
-def test_hours_mandatory_fields_are_none(client):
+def test_hours_mandatory_fields_are_none(client, jwt_token):
     data = deepcopy(HOURS_VALID_MANDATORY_DATA)
     for k in data:
         data[k] = None
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 400
 
 
-def test_hours_malformed_pantry_id_type(client):
+def test_hours_malformed_pantry_id_type(client, jwt_token):
     # Test handling of form data
     data = deepcopy(HOURS_VALID_MANDATORY_DATA)
     data["pantry_id"] = "Hello world!"
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 400
 
     # Test handling of bad URI
-    response = client.post(f"/api/pantries/{data["pantry_id"]}/hours", data=data)
+    response = client.post(
+        f"/api/pantries/{data["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
+    )
     assert response.status_code == 404
 
 
-def test_hours_malformed_day_of_week_type(client):
+def test_hours_malformed_day_of_week_type(client, jwt_token):
     data = deepcopy(HOURS_VALID_MANDATORY_DATA)
     data["day_of_week"] = 0.15
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 400
 
 
-def test_hours_malformed_day_of_week_value(client):
+def test_hours_malformed_day_of_week_value(client, jwt_token):
     data = deepcopy(HOURS_VALID_MANDATORY_DATA)
     data["day_of_week"] = "Hello world!"
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 400
 
 
-def test_hours_malformed_status_type(client):
+def test_hours_malformed_status_type(client, jwt_token):
     data = deepcopy(HOURS_VALID_MANDATORY_DATA)
     data["status"] = 0.15
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 400
 
 
-def test_hours_malformed_status_value(client):
+def test_hours_malformed_status_value(client, jwt_token):
     data = deepcopy(HOURS_VALID_MANDATORY_DATA)
     data["status"] = "NONE?"
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 400
 
 
-def test_hours_mandatory_fields_all_valid(client):
+def test_hours_mandatory_fields_all_valid(client, jwt_token):
     response = client.post(
         f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
         data=HOURS_VALID_MANDATORY_DATA,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 201
     assert response.json["pantry_id"] == HOURS_VALID_MANDATORY_DATA["pantry_id"]
@@ -285,43 +354,51 @@ def test_hours_mandatory_fields_all_valid(client):
     assert response.json["day_of_week"] == "MONDAY"
 
 
-def test_hours_optional_fields_some_missing(client):
+def test_hours_optional_fields_some_missing(client, jwt_token):
     data = deepcopy(HOURS_VALID_MANDATORY_DATA)
     data["open_time"] = "7:00 AM"
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 201
     assert response.json["open_time"] == "7:00 AM"
 
 
-def test_hours_optional_fields_malformed_open_time(client):
+def test_hours_optional_fields_malformed_open_time(client, jwt_token):
     data = deepcopy(HOURS_VALID_MANDATORY_DATA)
     data["open_time"] = "Hello world!"
     data["close_time"] = "7:00 PM"
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 400
 
 
-def test_hours_optional_fields_malformed_close_time(client):
+def test_hours_optional_fields_malformed_close_time(client, jwt_token):
     data = deepcopy(HOURS_VALID_MANDATORY_DATA)
     data["open_time"] = "7:00 AM"
     data["close_time"] = "Hello world!"
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 400
 
 
-def test_hours_optional_fields_some_none(client):
+def test_hours_optional_fields_some_none(client, jwt_token):
     # Test when open time is defined
     data = deepcopy(HOURS_VALID_MANDATORY_DATA)
     data["open_time"] = "7:00 PM"
     data["close_time"] = None
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 201
 
@@ -332,18 +409,22 @@ def test_hours_optional_fields_some_none(client):
     data["close_time"] = None
     data["status"] = "CLOSED"
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 201
 
 
-def test_hours_optional_fields_violating_constraints(client):
+def test_hours_optional_fields_violating_constraints(client, jwt_token):
     # Test NULL open + close time, but status says "Open"
     data = deepcopy(HOURS_VALID_MANDATORY_DATA)
     data["open_time"] = None
     data["close_time"] = None
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 400
 
@@ -352,7 +433,9 @@ def test_hours_optional_fields_violating_constraints(client):
     data["open_time"] = None
     data["close_time"] = "7:00 PM"
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 400
 
@@ -360,18 +443,22 @@ def test_hours_optional_fields_violating_constraints(client):
     data["open_time"] = "6:00 AM"
     data["close_time"] = "5:00 AM"
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 400
 
 
-def test_hours_optional_fields_all_valid(client):
+def test_hours_optional_fields_all_valid(client, jwt_token):
     # Test normal OPEN range
     data = deepcopy(HOURS_VALID_MANDATORY_DATA)
     data["open_time"] = "6:00 AM"
     data["close_time"] = "7:00 PM"
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 201
 
@@ -381,36 +468,48 @@ def test_hours_optional_fields_all_valid(client):
     data["close_time"] = None
     data["status"] = "CLOSED"
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 201
 
 
-def test_hours_invalid_pantry_id(client):
+def test_hours_invalid_pantry_id(client, jwt_token):
     # Test when URI DNE
     data = deepcopy(HOURS_VALID_MANDATORY_DATA)
     data["pantry_id"] = 1000
-    response = client.post(f"/api/pantries/{data["pantry_id"]}/hours", data=data)
+    response = client.post(
+        f"/api/pantries/{data["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
+    )
     assert response.status_code == 404
 
     # Test when form data doesn't match the URI
     data["pantry_id"] = 2
     response = client.post(
-        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours", data=data
+        f"/api/pantries/{HOURS_VALID_MANDATORY_DATA["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 400
 
 
-def test_hours_given_primary_id(client):
+def test_hours_given_primary_id(client, jwt_token):
     # Test when URI DNE
     data = deepcopy(HOURS_VALID_MANDATORY_DATA)
     data["id"] = 1
-    response = client.post(f"/api/pantries/{data["pantry_id"]}/hours", data=data)
+    response = client.post(
+        f"/api/pantries/{data["pantry_id"]}/hours",
+        data=data,
+        headers={"Authorization": f"Bearer {jwt_token}"},
+    )
     assert response.status_code == 201
     assert response.json["id"] > 1
 
 
-def test_hours_colliding_entry(client):
+def test_hours_colliding_entry(client, jwt_token):
     response = client.post(
         f"/api/pantries/63/hours",
         data={
@@ -420,5 +519,6 @@ def test_hours_colliding_entry(client):
             "open_time": None,
             "close_time": None,
         },
+        headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 409

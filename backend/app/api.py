@@ -1,4 +1,6 @@
 import json
+import os
+import requests
 from flask import Blueprint, request, jsonify, abort
 from sqlalchemy.exc import IntegrityError, DataError
 from werkzeug.exceptions import HTTPException
@@ -10,6 +12,7 @@ from zoneinfo import ZoneInfo
 from .models import Weekday, SupportedDiet, HourlyRangeStatus, Pantries, PantryHours
 from .cache import cache
 from .database import database as db
+from .auth import admin_required
 
 api = Blueprint("api", __name__)
 
@@ -118,6 +121,7 @@ def get_pantries():
 
 
 @api.route("/pantries", methods=["POST"])
+@admin_required
 def post_pantries():
     """Inserts a new row into the pantries table based on the given form data."""
     pantry = Pantries(
@@ -202,6 +206,7 @@ def get_pantry_by_id(pantry_id):
 
 
 @api.route("/pantries/<int:pantry_id>", methods=["PUT"])
+@admin_required
 def put_pantry_by_id(pantry_id):
     """Updates the fields of a specific pantry with id pantry_id, based on given
     form data.
@@ -295,6 +300,7 @@ def put_pantry_by_id(pantry_id):
 
 
 @api.route("/pantries/<int:pantry_id>", methods=["DELETE"])
+@admin_required
 def delete_pantry_by_id(pantry_id):
     """Deletes a row from the pantries table based on given pantry_id.
 
@@ -327,6 +333,7 @@ def get_pantry_hours(pantry_id):
 
 
 @api.route("/pantries/<int:pantry_id>/hours", methods=["POST"])
+@admin_required
 def post_pantry_hours(pantry_id):
     """Inserts an hourly listing for pantry with ID pantry_id.
 
@@ -391,6 +398,7 @@ def post_pantry_hours(pantry_id):
 
 
 @api.route("/pantries/<int:pantry_id>/hours/<int:hours_id>", methods=["PUT"])
+@admin_required
 def put_pantry_hours(pantry_id, hours_id):
     """Updates the fields of an hourly entry with ID hours_id for some pantry with
     ID pantry_id.
@@ -449,6 +457,7 @@ def put_pantry_hours(pantry_id, hours_id):
 
 
 @api.route("/pantries/<int:pantry_id>/hours/<int:hours_id>", methods=["DELETE"])
+@admin_required
 def delete_hourly_range_by_id(pantry_id, hours_id):
     """Deletes some hourly range with ID hours_id from the entries of a pantry
     with ID pantry_id.
@@ -469,3 +478,42 @@ def delete_hourly_range_by_id(pantry_id, hours_id):
     cache.delete_memoized(get_pantry_by_id, pantry_id)
     cache.delete_memoized(get_pantry_hours, pantry_id)
     return {}, 200
+
+
+#For Geo Code
+@api.route("/geocode")
+def geocode():
+    address = request.args.get("address")
+
+    if not address:
+        return jsonify({"error": "Address is required"}), 400
+    
+    #I am grabbing the GEOCODE_API_KEY from a local .env in got-food right now, not sure if this will still work after deployment
+    API_KEY = os.environ.get("GEOCODE_API_KEY")
+    if not API_KEY:
+        return jsonify({"error": "Missing GEOCODE_API_KEY"}), 500
+
+    url = "https://api.geocode.farm/forward/"
+    params = {
+        "addr": address,
+        "key": API_KEY
+    }
+
+    try:
+        response = requests.get(url, params=params)
+        data = response.json()
+
+        result = data.get("RESULTS", {}).get("result", {})
+        coords = result.get("coordinates", {})
+
+        if coords:
+            return jsonify({
+                "lat": coords.get("lat"),
+                "lon": coords.get("lon"),
+                "formatted_address": result.get("address", {}).get("full_address")
+            })
+        else:
+            return jsonify({"error": "No results found"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

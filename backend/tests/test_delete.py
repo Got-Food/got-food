@@ -1,7 +1,7 @@
 from random import randint
 
 
-def test_pantries_delete_id_in_table(client):
+def test_pantries_delete_id_in_table(client, jwt_token):
     # Verify pantry is present in table
     response = client.get("/api/pantries/63")
     assert response.status_code == 200
@@ -12,7 +12,9 @@ def test_pantries_delete_id_in_table(client):
     )
 
     # Delete pantry
-    response = client.delete("/api/pantries/63")
+    response = client.delete(
+        "/api/pantries/63", headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 200
 
     # Verify deletion went through
@@ -20,23 +22,27 @@ def test_pantries_delete_id_in_table(client):
     assert response.status_code == 404
 
 
-def test_pantries_delete_id_not_in_table(client):
+def test_pantries_delete_id_not_in_table(client, jwt_token):
     # Verify pantry is not present
     response = client.get("/api/pantries/1000")
     assert response.status_code == 404
 
     # Verify expected 404 from deletion
-    response = client.delete("/api/pantries/1000")
+    response = client.delete(
+        "/api/pantries/1000", headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 404
 
 
-def test_hours_delete_id_in_table(client):
+def test_hours_delete_id_in_table(client, jwt_token):
     # Verify hours entry is present in table
     response = client.get("/api/pantries/63/hours")
     assert any([h["id"] == 435 for h in response.json])
 
     # Delete hours entry
-    response = client.delete("/api/pantries/63/hours/435")
+    response = client.delete(
+        "/api/pantries/63/hours/435", headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 200
 
     # Verify deletion went through
@@ -44,7 +50,7 @@ def test_hours_delete_id_in_table(client):
     assert all([h["id"] != 435 for h in response.json])
 
 
-def test_hours_delete_id_bad_uri(client):
+def test_hours_delete_id_bad_uri(client, jwt_token):
     # Pick some hours entry that is present in table for given pantry ID
     response = client.get("/api/pantries/63/hours")
     hours_id = response.json[randint(0, len(response.json) - 1)]["id"]
@@ -55,7 +61,10 @@ def test_hours_delete_id_bad_uri(client):
     assert all([h["id"] != hours_id for h in response.json])
 
     # Attempt deletion using another pantry's ID
-    response = client.delete(f"/api/pantries/64/hours/{hours_id}")
+    response = client.delete(
+        f"/api/pantries/64/hours/{hours_id}",
+        headers={"Authorization": f"Bearer {jwt_token}"},
+    )
     assert response.status_code == 404
 
     # Verify that hours entries have not changed
@@ -65,14 +74,16 @@ def test_hours_delete_id_bad_uri(client):
     assert all([h["id"] != hours_id for h in response.json])
 
 
-def test_hours_delete_id_not_in_table(client):
+def test_hours_delete_id_not_in_table(client, jwt_token):
     # Verify hours entry is not present in table
     test_id = 1000
     response = client.get("/api/pantries/63/hours")
     assert all([h["id"] != test_id for h in response.json])
 
     # Attempt deletion
-    response = client.delete("/api/pantries/63/hours/1000")
+    response = client.delete(
+        "/api/pantries/63/hours/1000", headers={"Authorization": f"Bearer {jwt_token}"}
+    )
     assert response.status_code == 404
 
     # Verify hours information has not changed

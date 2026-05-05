@@ -105,5 +105,47 @@
 }
 
 .menu-item.flash {
-  animation: glow 1s ease-out forwards;
+  animation: glow 5s ease-out forwards;
+}
+
+.menu-item-admin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.menu-item-admin-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.menu-item-admin-btn:hover {
+  opacity: 0.8;
+}
+
+.menu-item-edit-btn {
+  background: #861f41;
+  color: white;
+}
+
+.menu-item-delete-btn {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.menu-item-status-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.menu-item-distance {
+  font-size: 13px;
+  color: #6b7280;
 }

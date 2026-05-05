@@ -10,6 +10,7 @@ services:
       - REDIS_URL=redis://redis_test:6379
       - REDIS_CACHE_TIMEOUT=300
       - CI=${CI}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
     depends_on:
       - redis_test
 
