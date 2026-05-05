@@ -13,11 +13,7 @@ def test_all_links_valid(client):
     # error information per-URL.
     data = response.get_json()
     for pantry in data:
-        try:
-            assert val.url(pantry["url"])
-        except AssertionError as e:
-            print(f"ERROR: URL {pantry["url"]} invalid; {e}")
-            raise e
+        assert val.url(pantry["url"])
 
 
 @pytest.mark.skipif(
@@ -44,12 +40,15 @@ def test_all_links_alive(client):
     data = response.get_json()
     dead_links = []
     for pantry in data:
-        response = requests.get(pantry["url"], headers=HEADERS)
-        if (
-            response.status_code >= 400
-            and response.status_code not in ERROR_CODE_EXCEPTIONS
-        ):
-            dead_links.append((pantry["url"], response.status_code))
+        try:
+            response = requests.get(pantry["url"], headers=HEADERS)
+            if (
+                response.status_code >= 400
+                and response.status_code not in ERROR_CODE_EXCEPTIONS
+            ):
+                dead_links.append((pantry["url"], response.status_code))
+        except Exception as e:
+            dead_links.append((pantry["url"], (f"ERROR: {type(e).__name__}")))
     assert (
         len(dead_links) == 0
     ), f"ERROR: The following URLs returned status codes indicating dead links. Check manually:\n{dead_links}"
