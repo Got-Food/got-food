@@ -52,7 +52,7 @@ def create_app() -> Flask:
     # Security headers (Talisman)
     # Force HTTPS only in production; disabled in dev so local demo works.
     # -------------------------
-    force_https = os.environ.get("FLASK_ENV", "development") == "production"
+    force_https = os.environ.get("FLASK_DEBUG", 0) == 0
     Talisman(
         app,
         force_https=force_https,

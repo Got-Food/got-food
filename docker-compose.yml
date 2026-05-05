@@ -16,11 +16,11 @@ services:
   backend:
     build: ./backend
     environment:
+      - FLASK_DEBUG=1
       - DATABASE_URL=postgresql://dev_user:dev_password@db:5432/gotfood_dev_database
       - REDIS_URL=redis://redis:6379
-      - CORS_ORIGINS=http://localhost:5173
       - REDIS_CACHE_TIMEOUT=300
-      - FLASK_ENV=development
+      - CORS_ORIGINS=http://localhost:5173
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - SEED_ADMIN_EMAIL=${SEED_ADMIN_EMAIL}
       - SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD}
@@ -30,15 +30,13 @@ services:
     volumes:
       - ./backend:/server
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
+      - redis
 
   redis:
     image: redis:alpine
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     build: ./database
