@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import "../styles/MapFilters.css";
 
-const MapFilters = ({ onSearch, pantries }) => {
+const MapFilters = ({ onSearch }) => {
   const [searchLocation, setSearchLocation] = useState("");
   const [kosher, setKosher] = useState(false);
   const [halal, setHalal] = useState(false);
@@ -10,7 +10,6 @@ const MapFilters = ({ onSearch, pantries }) => {
   const [residentialZip, setResidentialZip] = useState("");
   const [showOpen, setShowOpen] = useState(false);
   const [noShowVaried, setNoShowVaried] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
   const [useRadius, setUseRadius] = useState(false);
   const [radiusMiles, setRadiusMiles] = useState(10);
 
@@ -28,18 +27,6 @@ const MapFilters = ({ onSearch, pantries }) => {
     });
   };
 
-  const suggestions = useMemo(() => {
-    return [...new Set(pantries.map((p) => p.name).filter(Boolean))];
-  }, [pantries]);
-
-  const normalize = (s) => s.toLowerCase().replace(/[^a-z0-9\s]/g, "");
-
-  const activeSuggestions = useMemo(() => {
-    if (!searchLocation.trim()) return [];
-    const query = normalize(searchLocation);
-    return suggestions.filter((s) => normalize(s).includes(query));
-  }, [searchLocation, suggestions]);
-
   return (
     <div className="filter-container">
       <p className="filter-section-label">Search for Nearby Food Pantries</p>
@@ -52,30 +39,12 @@ const MapFilters = ({ onSearch, pantries }) => {
           onChange={(e) => setSearchLocation(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              setIsFocused(false);
               e.target.blur();
             }
           }}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
           placeholder="Enter your current location"
           className="filter-search-input"
         />
-        {isFocused && activeSuggestions.length > 0 && (
-          <ul className="autocomplete-dropdown">
-            {activeSuggestions.map((s) => (
-              <li
-                key={s}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  setSearchLocation(s);
-                }}
-              >
-                {s}
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
 
       <div className="filter-section">

@@ -18,7 +18,6 @@ import { getDistanceMiles } from "../utils/get_distance";
 
 function SearchPage() {
   const { isAdmin } = useAuth();
-  const [allPantries, setAllPantries] = useState([]);
   const [pantries, setPantries] = useState([]);
   const [selectedPantry, setSelectedPantry] = useState(null);
   const [pantrySelection, setPantrySelection] = useState(null);
@@ -28,7 +27,6 @@ function SearchPage() {
   const fetchAll = () => {
     getAllPantries().then((data) => {
       if (!data) return;
-      setAllPantries(data);
       setPantries(data);
     });
   };
@@ -225,7 +223,7 @@ function SearchPage() {
             }))
           }
         />
-        <Filter onSearch={handleSearch} pantries={allPantries} />
+        <Filter onSearch={handleSearch} />
       </main>
 
       {adminModal && (
