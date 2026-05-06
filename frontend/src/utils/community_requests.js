@@ -1,21 +1,6 @@
 import { toFormData } from "./api_requests";
 import { authHeaders } from "./api_requests";
 
-// Create operations
-// export function createUserPantry(name, address, city, state, zip, has_variable_hours, optionals: Object) {
-//     try {
-//         const res = await fetch("/api/community/pantries");
-//         if (!res.ok) 
-//             throw new Error(res.status);
-//         return await res.json();
-//     } catch (err) {
-//         console.log("ERROR: getAllUserPantries(): " + err);
-//         return null;
-//     }
-//     // Returns JSON of inserted pantry and 201 CREATED HTTP status code.
-//     // Optional user pantry fields are passed as key/value pairs in the OPTIONALS object.
-// }
-
 /**
  * Inserts an event with the given mandatory and optional parameters into the 
  * database.
@@ -63,71 +48,17 @@ export async function getAllEvents() {
     }
 }
 
-
-// /**
-//  * Grabs all user-submitted pantries.
-//  * 
-//  * @returns {Object | null} A JSON object containing all user-submitted pantries stored
-//  * in the DB. 
-//  */
-// export function getAllUserPantries() {
-//     try {
-//         const res = await fetch("/api/community/pantries");
-//         if (!res.ok) 
-//             throw new Error(res.status);
-//         return await res.json();
-//     } catch (err) {
-//         console.log("ERROR: getAllUserPantries(): " + err);
-//         return null;
-//     }
-// }
-
-// export function getAllOpenUserPantries() {
-
-// }
-
-// export function getAllVariedUserPantries() {
-
-// }
-
-// export function getUserPantryByID(id) {
-
-// }
-
-// export function getUserPantryHoursByID(id) {
-
-// }
-
-// export function getUserPantriesServingZipCode(zipCode) {
-
-// }
-
-
-// export function getUserPantriesSupportingDiets(diets) {
-
-// }
-
-// export function updateUserPantry(pantryId, jsonParams) {
-
-// }
-
-// export function updateUserPantryHours(pantryId, hourlyRangeId, jsonParams) {
-
-// }
-
-// export function updateUserEvent(pantryId, jsonParams) {
-
-// }
-
-// // Most likely purely administrative
-// export function deleteUserPantry(pantryId) {
-
-// }
-
-// export function deleteHourlyRangeByID(pantryId, hourlyRangeId) {
-
-// }
-
-// export function deleteEvent(id) {
-
-// }
+/**
+ * Deletes a user-submitted event associated with a given ID from the database.
+ * Note that this is a privileged action.
+ * 
+ * @param {number} id - the ID of the event to delete from the database. 
+ * @returns {boolean} - True on success. 
+ */
+export async function deleteEvent(id) {
+  const res = await fetch("/api/community/events/" + id, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  return res.status === 200;
+}

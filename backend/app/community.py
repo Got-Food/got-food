@@ -241,6 +241,21 @@ def post_user_pantries():
     return jsonify(pantry.serialize()), 201
 
 
+@community.route("/events", methods=["GET"])
+@cache.cached()
+def get_events():
+    """Obtains all user-entered events that have not occurred yet."""
+    query = db.select(UserEvents).order_by(UserEvents.id)
+    # Use the current EST time for current time, in case this application is
+    # being run from another time zone.
+    current_est_time = datetime.now(ZoneInfo("America/New_York"))
+    formatted_est_time = current_est_time.strftime("%Y-%m-%d %H:%M:%S")
+    query = query.where(UserEvents.date_and_time >= formatted_est_time)
+    results = db.session.execute(query).scalars().all()
+    results = [x.serialize() for x in results]
+    return jsonify(results)
+
+
 @community.route("/events", methods=["POST"])
 def post_user_events():
     """Inserts a new row into the user_events table based on the given form data.
@@ -356,17 +371,22 @@ def post_user_events():
     cache.delete(get_events)
     return jsonify(event.serialize()), 201
 
+@community.route("/events/<int:event_id>", methods=["DELETE"])
+@admin_required
+def delete_event(event_id):
+    """Deletes a row from the user_events table based on given id.
 
-@community.route("/events", methods=["GET"])
-@cache.cached()
-def get_events():
-    """Obtains all user-entered events that have not occurred yet."""
-    query = db.select(UserEvents).order_by(UserEvents.id)
-    # Use the current EST time for current time, in case this application is
-    # being run from another time zone.
-    current_est_time = datetime.now(ZoneInfo("America/New_York"))
-    formatted_est_time = current_est_time.strftime("%Y-%m-%d %H:%M:%S")
-    query = query.where(UserEvents.date_and_time >= formatted_est_time)
-    results = db.session.execute(query).scalars().all()
-    results = [x.serialize() for x in results]
-    return jsonify(results)
+    Clears the cache after deletion to prevent stale values.
+    """
+    res = UserEvents.query.filter(UserEvents.id == event_id).delete()
+
+    # If more than 1 row was deleted, this indicates a critical DB error,
+    # since the combination of (id, event_id) should be unique
+    if res > 1:
+        db.session.rollback()
+        abort(500, "The server encountered a multiple deletion error.")
+    elif res == 0:
+        abort(404, f"The targeted resource of event ID {event_id} was not found.")
+    db.session.commit()
+    cache.delete(get_events)
+    return {}, 200
