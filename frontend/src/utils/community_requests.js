@@ -311,21 +311,6 @@ export async function deleteUserPantry(id) {
 }
 
 /**
- * Deletes the user pantry with ID id from the database. Note that this is a
- * privileged action.
- *
- * @param {number} id - the unique ID of the user pantry to delete.
- * @returns {boolean} - True on success.
- */
-export async function deleteUserPantry(id) {
-  const res = await fetch(`/api/community/pantries/${id}`, {
-    method: "DELETE",
-    headers: authHeaders(),
-  });
-  return res.status === 200;
-}
-
-/**
  * Deletes the hourly entry with unique ID hoursId from the hours of the user pantry
  * with unique ID id. Note that this is a privileged action.
  *
