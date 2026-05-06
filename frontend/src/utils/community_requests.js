@@ -88,7 +88,21 @@ export async function deleteEvent(id) {
  *
  * @param {number} id - the ID of the event to update.
  * @param {Object} optionalObject - An object containing the key/value pairs
- * of the fields you want to update.
+ * of the fields you want to update. The fields that you can update include the
+ * following:
+ * - name - the name of the event.
+ * - address - the street address of the event's location.
+ * - city - the name of the city of the event's location.
+ * - state - the state abbreviation of the event's location.
+ * - zip - the 5-digit ZIP of the event's location.
+ * - for_students_only - whether or not the event is only for students.
+ * - date - date, in YYYY-MM-DD format
+ * - time - time, in HH:MM:SS 24-hr format
+ * - url - URL for a website of the event.
+ * - phone - A valid phone number for the event.
+ * - email - A valid email for the event.
+ * - supported_diets - An array of supported diets.
+ * - comments - Any additional comments.
  * @returns {Object} State of success of the query.
  */
 export async function updateEvent(id, optionalObject) {
