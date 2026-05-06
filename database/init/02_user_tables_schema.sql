@@ -92,16 +92,9 @@ CREATE TABLE IF NOT EXISTS user_events (
 
     -- Mandatory user-given fields
     name VARCHAR(255) NOT NULL,   
-    address VARCHAR(255) NOT NULL,   
-    city VARCHAR(100) NOT NULL,
-    state VARCHAR(2) NOT NULL,   
-    zip VARCHAR(10) NOT NULL,
+    full_address VARCHAR(255) NOT NULL,   
     is_students_only BOOLEAN NOT NULL,
     date_and_time TIMESTAMP NOT NULL,
-
-    -- Obtained programatically on the backend
-    latitude NUMERIC(15, 13) NOT NULL, 
-    longitude NUMERIC(16, 13) NOT NULL,
     
     -- Optional user-given fields
     url TEXT,
@@ -111,10 +104,5 @@ CREATE TABLE IF NOT EXISTS user_events (
     comments TEXT,   
 
     -- Internal created_at timestamp, user won't enter this
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-
-    -- ZIP code formatting check
-    CONSTRAINT valid_zip CHECK (
-        zip ~ '^[0-9]{5}$'
-    )
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

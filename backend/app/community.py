@@ -358,14 +358,9 @@ def post_user_events():
     """
     event = UserEvents(
         name=request.form.get("name"),
-        address=request.form.get("address"),
-        city=request.form.get("city"),
-        state=request.form.get("state"),
-        zip=request.form.get("zip"),
+        full_address=request.form.get("full_address"),
         is_students_only=request.form.get("is_students_only"),
         date_and_time=request.form.get("date_and_time"),
-        latitude=None,
-        longitude=None,
         url=request.form.get("url"),
         phone=request.form.get("phone"),
         email=request.form.get("email"),
@@ -429,15 +424,6 @@ def post_user_events():
                     f"is_students_only must be boolean (true/false), not {{{event.is_students_only}}}.",
                 )
 
-    coords = get_coordinates(event.address, event.city, event.state, event.zip)
-    if coords:
-        event.latitude, event.longitude = coords
-    else:
-        abort(
-            500,
-            f"Coordinates were not able to be obtained from the given address.",
-        )
-
     # Insert into DB
     try:
         db.session.add(event)
@@ -476,19 +462,12 @@ def update_event(event_id):
     See the api.py docstrings for more detail.
     """
     event = db.get_or_404(UserEvents, event_id)
-    old_address = event.address
-    old_city = event.city
-    old_state = event.state
-    old_zip = event.zip
     old_datetime = event.date_and_time
 
     # Update only fields that were provided
     fields = [
         "name",
-        "address",
-        "city",
-        "state",
-        "zip",
+        "full_address",
         "is_students_only",
         "date_and_time",
         "url",
@@ -501,22 +480,6 @@ def update_event(event_id):
         value = request.form.get(field)
         if value is not None:
             setattr(event, field, value)
-
-    # Recompute lat + long if address info has changed
-    if (
-        event.address != old_address
-        or event.city != old_city
-        or event.state != old_state
-        or event.zip != old_zip
-    ):
-        coords = get_coordinates(event.address, event.city, event.state, event.zip)
-        if coords is not None:
-            event.latitude, event.longitude = coords
-        else:
-            abort(
-                500,
-                f"Coordinates were not able to be obtained from the given address.",
-            )
 
     # Validate mandatory datetime
     if event.date_and_time != old_datetime:

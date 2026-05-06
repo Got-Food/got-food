@@ -5,10 +5,8 @@ import { authHeaders } from "./api_requests";
  * Inserts an event with the given mandatory and optional parameters into the
  * database.
  * @param {string} name - the name of the event.
- * @param {string} streetAddress - the street address of the event's location.
- * @param {string} cityName - the name of the city of the event's location.
- * @param {string} state - the state abbreviation of the event's location.
- * @param {string} zip - the 5-digit ZIP of the event's location.
+ * @param {string} fullAddress - the full address of the event's location, including
+ *  street address, city, state, and ZIP code.
  * @param {boolean} forStudentsOnly - whether or not the event is only for students.
  * @param {string} date - date, in YYYY-MM-DD format
  * @param {string} time - time, in HH:MM:SS 24-hr format
@@ -23,10 +21,7 @@ import { authHeaders } from "./api_requests";
  */
 export async function createEvent(
   name,
-  streetAddress,
-  cityName,
-  state,
-  zip,
+  fullAddress,
   forStudentsOnly,
   date,
   time,
@@ -34,10 +29,7 @@ export async function createEvent(
 ) {
   const mandatoryFields = {
     name: name,
-    address: streetAddress,
-    city: cityName,
-    state: state,
-    zip: zip,
+    full_address: fullAddress,
     is_students_only: forStudentsOnly,
     date_and_time: `${date} ${time}`,
   };
@@ -91,10 +83,8 @@ export async function deleteEvent(id) {
  * of the fields you want to update. The fields that you can update include the
  * following:
  * - name - the name of the event.
- * - address - the street address of the event's location.
- * - city - the name of the city of the event's location.
- * - state - the state abbreviation of the event's location.
- * - zip - the 5-digit ZIP of the event's location.
+ * - full_address - the full address of the event, including the street address,
+ *  city, state, and 5-digit ZIP code.
  * - for_students_only - whether or not the event is only for students.
  * - date - date, in YYYY-MM-DD format
  * - time - time, in HH:MM:SS 24-hr format

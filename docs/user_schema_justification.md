@@ -17,7 +17,12 @@ to indicate whether an event is open to the general public or only available for
 students of Virginia Tech. We make the URL, phone number, email, supported diets,
 and comments optional here to avoid sending the user on a wild goose chase trying
 to locate that information themselves. Removing roadblocks from the path to inserting
-new entries in the database will also encourage user interaction.
+new entries in the database will also encourage user interaction. It's important to
+note that we remove the separation of street address, city, state, and zip code 
+information, since we are not displaying the events on a map like the initial
+pantries. Here, we trust that the addresses users provide are accurate. We further
+exclude latitude and longitude due to the no-map simplification leaving those
+fields without purpose.
 
 Lastly, we include a separate `user_pantry_hours` table, corresponding with the
 `user_pantries` table. This serves the exact same purpose as its initialized
@@ -131,16 +136,9 @@ CREATE TABLE IF NOT EXISTS user_events (
 
     -- Mandatory user-given fields
     name VARCHAR(255) NOT NULL,   
-    address VARCHAR(255) NOT NULL,   
-    city VARCHAR(100) NOT NULL,
-    state VARCHAR(2) NOT NULL,   
-    zip VARCHAR(10) NOT NULL,
+    full_address VARCHAR(255) NOT NULL,   
     is_students_only BOOLEAN NOT NULL,
     date_and_time TIMESTAMP NOT NULL,
-
-    -- Obtained programatically on the backend
-    latitude NUMERIC(15, 13) NOT NULL, 
-    longitude NUMERIC(16, 13) NOT NULL,
     
     -- Optional user-given fields
     url TEXT,
@@ -150,11 +148,6 @@ CREATE TABLE IF NOT EXISTS user_events (
     comments TEXT,   
 
     -- Internal created_at timestamp, user won't enter this
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-
-    -- ZIP code formatting check
-    CONSTRAINT valid_zip CHECK (
-        zip ~ '^[0-9]{5}$'
-    )
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```

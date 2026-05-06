@@ -240,16 +240,9 @@ class UserEvents(db.Model):
 
     # Mandatory user-given fields
     name = db.Column(db.String(255), nullable=False)
-    address = db.Column(db.String(255), nullable=False)
-    city = db.Column(db.String(100), nullable=False)
-    state = db.Column(db.String(2), nullable=False)
-    zip = db.Column(db.String(10), nullable=False)
+    full_address = db.Column(db.String(255), nullable=False)
     is_students_only = db.Column(db.Boolean, nullable=False)
     date_and_time = db.Column(db.DateTime, nullable=False)
-
-    # Mandatory, but obtained programmatically
-    latitude = db.Column(db.Numeric(15, 13), nullable=False)
-    longitude = db.Column(db.Numeric(16, 13), nullable=False)
 
     # Optional user-given communication fields
     url = db.Column(db.Text)
@@ -273,14 +266,9 @@ class UserEvents(db.Model):
         return {
             "id": self.id,
             "name": self.name,
-            "address": self.address,
-            "city": self.city,
-            "state": self.state,
-            "zip": self.zip,
+            "full_address": self.full_address,
             "is_students_only": self.is_students_only,
             "date_and_time": self.date_and_time,
-            "latitude": self.latitude,
-            "longitude": self.longitude,
             "url": self.url,
             "phone": self.phone,
             "email": self.email,
