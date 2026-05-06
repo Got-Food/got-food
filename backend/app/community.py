@@ -241,6 +241,28 @@ def post_user_pantries():
     return jsonify(pantry.serialize()), 201
 
 
+@community.route("/pantries/<int:pantry_id>", methods=["GET"])
+@cache.memoize()
+def get_user_pantry(pantry_id):
+    """Grabs a specific pantry from the user_pantries table by unique ID.
+
+    Caches the response based on the ID of the pantry.
+    """
+    pantry = db.get_or_404(UserPantries, pantry_id)
+    pantry = pantry.serialize()
+    return jsonify(pantry)
+
+
+@community.route("/pantries/<int:pantry_id>/hours", methods=["GET"])
+@cache.memoize()
+def get_user_pantry_hours(pantry_id):
+    """Gets a user pantry's hourly listings based on a given pantry_id."""
+    query = db.select(UserPantryHours).filter_by(pantry_id=pantry_id)
+    hours = db.session.execute(query).scalars().all()
+    hours = [h.serialize() for h in hours]
+    return jsonify(hours)
+
+
 @community.route("/events", methods=["GET"])
 @cache.memoize()
 def get_events():
@@ -378,7 +400,7 @@ def update_event(event_id):
     Note that this function uses getlist() for supported_diets,
     while the GET functions use get() and split(..., ','). This is because
     the fields are passed as form data here, which lends itself well to the getlist()
-    format rather than the CSV approach we take in the GET functions. 
+    format rather than the CSV approach we take in the GET functions.
     See the api.py docstrings for more detail.
     """
     event = db.get_or_404(UserEvents, event_id)

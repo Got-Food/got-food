@@ -113,3 +113,56 @@ export async function updateEvent(id, optionalObject) {
   });
   return { ok: res.ok, status: res.status, data: await res.json() };
 }
+
+/**
+ * Grabs all user-submitted pantries.
+ *
+ * @returns {Object} An object containing all user-submitted pantries stored
+ * in the database.
+ */
+export async function getAllUserPantries() {
+  try {
+    const res = await fetch("/api/community/pantries");
+    if (!res.ok) throw new Error(res.status);
+    return await res.json();
+  } catch (err) {
+    console.log("ERROR: getAllUserPantries(): " + err);
+    return null;
+  }
+}
+
+/**
+ * Obtains a JSON object containing the pantry information of the user pantry with
+ * id ID. This also returns its associated hours in the JSON field "hours".
+ *
+ * @param {number} id - The ID of the user pantry to look up.
+ * @returns {Object} A JSON object containing all of the data for pantry with
+ * id ID.
+ */
+export async function getUserPantry(id) {
+  try {
+    const res = await fetch(`/api/community/pantries/${id}`);
+    if (!res.ok) throw new Error(res.status);
+    return await res.json();
+  } catch (err) {
+    console.log("ERROR: getUserPantry(): " + err);
+    return null;
+  }
+}
+
+/**
+ * Queries the database for user pantry of id ID to obtain only its stored hours of operation.
+ *
+ * @param {number} id - The ID of the user pantry that we want to find the hours of.
+ * @returns {Object} A JSON object containing the pantry's hours.
+ */
+export async function getUserPantryHours(id) {
+  try {
+    const res = await fetch(`/api/community/pantries/${id}/hours`);
+    if (!res.ok) throw new Error(res.status);
+    return await res.json();
+  } catch (err) {
+    console.log("ERROR: getUserPantryHours(): " + err);
+    return null;
+  }
+}
