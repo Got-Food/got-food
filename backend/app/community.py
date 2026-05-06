@@ -260,6 +260,142 @@ def get_user_pantry(pantry_id):
     return jsonify(pantry)
 
 
+@community.route("/pantries/<int:pantry_id>", methods=["PUT"])
+@admin_required
+def update_user_pantry(pantry_id):
+    """Updates the fields of a specific pantry with id pantry_id, based on given
+    form data.
+
+    Note that this function uses getlist() for eligibility and supported_diets,
+    while the GET functions use get() and split(..., ','). This is because
+    the fields are passed as form data here, which lends itself well to the getlist()
+    format (eligibility=22000 && eligibility=22001 && eligibility=22002 ...) rather
+    than the CSV approach we take in the GET functions (...?eligibility=22000,22001,22002...).
+    """
+    pantry = db.get_or_404(UserPantries, pantry_id)
+    old_addr = pantry.address
+    old_city = pantry.city
+    old_state = pantry.state
+    old_zip = pantry.zip
+
+    # Update only fields that were provided
+    fields = [
+        "name",
+        "address",
+        "city",
+        "state",
+        "zip",
+        "has_variable_hours",
+        "url",
+        "phone",
+        "email",
+        "eligibility",
+        "supported_diets",
+        "comments",
+    ]
+    for field in fields:
+        value = request.form.get(field)
+        if value is not None:
+            setattr(pantry, field, value)
+
+    if pantry.url is not None and not validators.url(pantry.url):
+        abort(
+            400,
+            f"User submitted invalid URL '{pantry.url}'. URL needs to be of proper format.",
+        )
+
+    if pantry.phone is not None:
+        try:
+            num = phonenumbers.parse(pantry.phone)
+        except NumberParseException:
+            abort(
+                400,
+                f"If submitting a phone number, the user must submit a valid format. Given phone number {pantry.phone} is of incorrect format.",
+            )
+        else:
+            if not phonenumbers.is_valid_number(num):
+                abort(
+                    400,
+                    f"If submitting a phone number, the user must submit a valid number. Given phone number {pantry.phone} is invalid.",
+                )
+
+    if pantry.email is not None:
+        try:
+            validate_email(pantry.email)
+        except EmailNotValidError:
+            abort(400, f"User email '{pantry.email}' is of an invalid format.")
+
+    eligibility = request.form.getlist("eligibility")
+    if eligibility:
+        pantry.eligibility = eligibility
+
+    # Convert supported_diets to enum equivalent
+    supported_diets = request.form.getlist("supported_diets")
+    if supported_diets:
+        try:
+            pantry.supported_diets = [SupportedDiet(d.upper()) for d in supported_diets]
+        except (KeyError, ValueError) as e:
+            abort(
+                400,
+                f"Given diet(s) {e.args[0]} do not match available choices: {", ".join(SupportedDiet._member_names_)}",
+            )
+
+    # Convert has_variable_hours to bool equivalent
+    has_variable_hours = request.form.get("has_variable_hours")
+    if has_variable_hours is not None:
+        match has_variable_hours.casefold():
+            case "true":
+                pantry.has_variable_hours = True
+            case "false":
+                pantry.has_variable_hours = False
+            case _:
+                abort(
+                    400,
+                    f"has_variable_hours must be boolean, not {{{has_variable_hours}}}.",
+                )
+
+    # Update internal lat/lon if address information changed
+    if (
+        pantry.address != old_addr
+        or pantry.city != old_city
+        or pantry.state != old_state
+        or pantry.zip != old_zip
+    ):
+        coords = get_coordinates(pantry.address, pantry.city, pantry.state, pantry.zip)
+        if coords is not None:
+            pantry.latitude, pantry.longitude = coords
+        else:
+            abort(
+                400,
+                "The user's updated address fields cannot be located on a map. Error in pinpointing latitude and longitude.",
+            )
+
+    # Insert into DB
+    try:
+        db.session.commit()
+    except (IntegrityError, DataError) as e:
+        db.session.rollback()
+        match e.orig:
+            case errors.UniqueViolation():
+                abort(
+                    409,
+                    "Given pantry data conflicts with an entry already in the database.",
+                )
+            case errors.NotNullViolation():
+                abort(400, "A mandatory field was passed in as null.")
+            case _:
+                abort(
+                    400,
+                    "Malformed pantry fields. Ensure that all fields are of the correct format.",
+                )
+
+    # Clear stale cached values on success
+    cache.delete_memoized(get_user_pantries_memoized)
+    cache.delete_memoized(get_user_pantry, pantry_id)
+    cache.delete_memoized(get_user_pantry_hours, pantry_id)
+    return jsonify(pantry.serialize()), 200
+
+
 @community.route("/pantries/<int:pantry_id>/hours", methods=["GET"])
 @cache.memoize()
 def get_user_pantry_hours(pantry_id):
@@ -333,6 +469,91 @@ def add_user_pantry_hours(pantry_id):
     cache.delete_memoized(get_user_pantry, pantry_id)
     cache.delete_memoized(get_user_pantry_hours, pantry_id)
     return jsonify(hours.serialize()), 201
+
+
+@community.route("/pantries/<int:pantry_id>/hours/<int:hours_id>", methods=["PUT"])
+@admin_required
+def put_pantry_hours(pantry_id, hours_id):
+    """Updates the fields of an hourly entry with ID hours_id for some pantry with
+    ID pantry_id.
+    """
+    hours = db.session.execute(
+        db.select(UserPantryHours).filter_by(id=hours_id, pantry_id=pantry_id)
+    ).scalar_one_or_none()
+
+    if hours is None:
+        abort(
+            404,
+            "The hours entry associated with the given pantry and hours IDs was not found.",
+        )
+
+    day_of_week = request.form.get("day_of_week", type=Weekday)
+    if day_of_week is not None:
+        hours.day_of_week = day_of_week
+
+    status = request.form.get("status", type=HourlyRangeStatus)
+    if status is not None:
+        hours.status = status
+
+    open_time = request.form.get("open_time")
+    close_time = request.form.get("close_time")
+    try:
+        if open_time is not None:
+            hours.open_time = datetime.strptime(open_time, "%I:%M %p")
+        if close_time is not None:
+            hours.close_time = datetime.strptime(close_time, "%I:%M %p")
+    except ValueError as e:
+        abort(
+            400,
+            f"Open and closing times need to be of the form HH:MM <AM/PM>, not '{e.args[0]}'.",
+        )
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        match e.orig:
+            case errors.UniqueViolation():
+                abort(
+                    409,
+                    "The given hours entry's unique values conflict with another entry in the database.",
+                )
+            case _:
+                abort(
+                    400,
+                    "Malformed pantry hours fields. Ensure that all fields are of the correct format.",
+                )
+
+    cache.delete_memoized(get_user_pantries_memoized)
+    cache.delete_memoized(get_user_pantry, pantry_id)
+    cache.delete_memoized(get_user_pantry_hours, pantry_id)
+    return jsonify(hours.serialize()), 200
+
+
+@community.route("/pantries/<int:pantry_id>/hours/<int:hours_id>", methods=["DELETE"])
+@admin_required
+def delete_hourly_range_by_id(pantry_id, hours_id):
+    """Deletes some hourly range with ID hours_id from the entries of a user pantry
+    with ID pantry_id.
+    """
+    res = UserPantryHours.query.filter(
+        UserPantryHours.pantry_id == pantry_id, UserPantryHours.id == hours_id
+    ).delete()
+
+    # If more than 1 row was deleted, this indicates a critical DB error,
+    # since the combination of (id, pantry_id) should be unique
+    if res > 1:
+        db.session.rollback()
+        abort(500, "The server encountered a multiple deletion error.")
+    elif res == 0:
+        abort(
+            404, f"The targeted resource of user pantry ID {pantry_id} was not found."
+        )
+    db.session.commit()
+    cache.delete_memoized(get_user_pantries_memoized)
+    cache.delete_memoized(get_user_pantry, pantry_id)
+    cache.delete_memoized(get_user_pantry_hours, pantry_id)
+    return {}, 200
 
 
 @community.route("/events", methods=["GET"])

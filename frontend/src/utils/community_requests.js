@@ -231,3 +231,113 @@ export async function getUserPantryHours(id) {
     return null;
   }
 }
+
+/**
+ * Updates the user pantry with the given ID using the optional key/value pairs
+ * in the optionalObject parameter.
+ *
+ * Note that this is a privileged action that requires a user to be logged in
+ * as admin.
+ * @param {number} id - the ID of the pantry to update.
+ * @param {Object} options - The optional parameter key/value pairs
+ * to update. Note that the following keys are available for modification:
+ *  - name - the name of the pantry.
+ *  - address - the street address of the pantry.
+ *  - city - the city of the pantry.
+ *  - state - the state abbreviation of the pantry's location.
+ *  - zip - the 5-digit ZIP code of the pantry's location.
+ *  - has_variable_hours - whether or not the pantry's hours can vary.
+ *  - url - the URL for the pantry.
+ *  - phone - the pantry's phone number.
+ *  - email - the pantry's email address.
+ *  - eligibility - An array of the zip codes supported by this pantry.
+ *  - supported_diets - An array of the diets that this pantry supports.
+ *  - comments - Any additional comments related to this pantry.
+ * @returns {Object} The success status and updated pantry entry.
+ */
+export async function updateUserPantry(id, options) {
+  const res = await fetch(`/api/community/pantries/${id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: toFormData(options),
+  });
+  return { ok: res.ok, status: res.status, data: await res.json() };
+}
+
+/**
+ * Updates a specific hourly range entry of unique ID hoursId. This hourly
+ * range must belong to a pantry with ID pantryId. Note that you cannot change
+ * the pantryId of the hourly range entry, since the entry is already associated
+ * with its corresponding pantry, done at creation.
+ *
+ * Note that this is a privileged action.
+ * @param {number} pantryId - The unique identifier of the pantry.
+ * @param {number} hoursId - The unique identifier of the user_pantry_hours row in
+ * the database.
+ * @param {Object} options - The key/value pairs including fields that you want
+ * to modify and what you want to change them to. The fields you can change
+ * include the following:
+ *  - day_of_week - "MONDAY" / "TUESDAY" / ... the day of the week for the entry.
+ *  - status - (OPEN/CLOSED) - the status corresponding to the hourly range entry.
+ *  - open_time - opening time of the range, in "HH:MM <AM/PM>" format.
+ *  - close_time - closing time of the range, in "HH:MM <AM/PM>" format.
+ * @returns {Object} The success status of the query and the modified entry.
+ */
+export async function updateUserPantryHours(pantryId, hoursId, options) {
+  const res = await fetch(
+    `/api/community/pantries/${pantryId}/hours/${hoursId}`,
+    {
+      method: "PUT",
+      headers: authHeaders(),
+      body: toFormData(jsonParams),
+    },
+  );
+  return { ok: res.ok, status: res.status, data: await res.json() };
+}
+
+/**
+ * Deletes the user pantry with ID id from the database. Note that this is a
+ * privileged action.
+ *
+ * @param {number} id - the unique ID of the user pantry to delete.
+ * @returns {boolean} - True on success.
+ */
+export async function deleteUserPantry(id) {
+  const res = await fetch(`/api/community/pantries/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  return res.status === 200;
+}
+
+/**
+ * Deletes the user pantry with ID id from the database. Note that this is a
+ * privileged action.
+ *
+ * @param {number} id - the unique ID of the user pantry to delete.
+ * @returns {boolean} - True on success.
+ */
+export async function deleteUserPantry(id) {
+  const res = await fetch(`/api/community/pantries/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  return res.status === 200;
+}
+
+/**
+ * Deletes the hourly entry with unique ID hoursId from the hours of the user pantry
+ * with unique ID id. Note that this is a privileged action.
+ *
+ * @param {number} id - the unique ID of the user pantry that contains the hourly entry.
+ * @param {number} hoursId - the unique ID of the hourly range entry that is associated
+ * with the user pantry of ID id.
+ * @returns {boolean} - True on success.
+ */
+export async function deleteUserPantryHours(id, hoursId) {
+  const res = await fetch(`/api/community/pantries/${id}/hours/${hoursId}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  return res.status === 200;
+}
