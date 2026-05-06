@@ -40,13 +40,24 @@ function Resources() {
   };
 
   const toggleDiet = (diet) => {
-    setForm((prev) => ({
+  setForm((prev) => {
+    if (diet === "ANY" || diet === "NONE") {
+      // If clicking ANY or NONE, deselect everything else and just select this one
+      return {
+        ...prev,
+        supported_diets: prev.supported_diets.includes(diet) ? [] : [diet],
+      };
+    }
+    // If clicking a regular diet, remove ANY and NONE from the selection
+    const without = prev.supported_diets.filter((d) => d !== "ANY" && d !== "NONE");
+    return {
       ...prev,
-      supported_diets: prev.supported_diets.includes(diet)
-        ? prev.supported_diets.filter((d) => d !== diet)
-        : [...prev.supported_diets, diet],
-    }));
-  };
+      supported_diets: without.includes(diet)
+        ? without.filter((d) => d !== diet)
+        : [...without, diet],
+    };
+  });
+};
 
   const handleSubmit = async () => {
     if (!form.name || !form.address || !form.date || !form.time) {
