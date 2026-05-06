@@ -365,9 +365,6 @@ def post_user_events():
                 )
 
     # Clear stale cached values on success
-    # cache.delete_memoized(get_user_events_memoized)
-    # cache.delete_memoized(get_pantry_by_id, pantry.id)
-    # cache.delete_memoized(get_pantry_hours, pantry.id)
     cache.delete_memoized(get_events)
     return jsonify(event.serialize()), 201
 
