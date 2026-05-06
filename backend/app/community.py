@@ -265,7 +265,7 @@ def post_user_events():
     )
 
     # Validate mandatory datetime
-    event.date_and_time = datetime.strptime(event.date_and_time, "%Y-%m-%d %H:%M")
+    event.date_and_time = datetime.strptime(event.date_and_time, "%Y-%m-%d %H:%M:%S")
 
     # Validate optional parameters
     if event.url is not None and not validators.url(event.url):
@@ -353,4 +353,20 @@ def post_user_events():
     # cache.delete_memoized(get_user_events_memoized)
     # cache.delete_memoized(get_pantry_by_id, pantry.id)
     # cache.delete_memoized(get_pantry_hours, pantry.id)
+    cache.delete(get_events)
     return jsonify(event.serialize()), 201
+
+
+@community.route("/events", methods=["GET"])
+@cache.cached()
+def get_events():
+    """Obtains all user-entered events that have not occurred yet."""
+    query = db.select(UserEvents).order_by(UserEvents.id)
+    # Use the current EST time for current time, in case this application is
+    # being run from another time zone.
+    current_est_time = datetime.now(ZoneInfo("America/New_York"))
+    formatted_est_time = current_est_time.strftime("%Y-%m-%d %H:%M:%S")
+    query = query.where(UserEvents.date_and_time >= formatted_est_time)
+    results = db.session.execute(query).scalars().all()
+    results = [x.serialize() for x in results]
+    return jsonify(results)

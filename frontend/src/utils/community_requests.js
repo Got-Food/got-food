@@ -1,4 +1,5 @@
 import { toFormData } from "./api_requests";
+import { authHeaders } from "./api_requests";
 
 // Create operations
 // export function createUserPantry(name, address, city, state, zip, has_variable_hours, optionals: Object) {
@@ -25,7 +26,7 @@ import { toFormData } from "./api_requests";
  * @param {string} zip - the 5-digit ZIP of the event's location. 
  * @param {boolean} forStudentsOnly - whether or not the event is only for students. 
  * @param {string} date - date, in YYYY-MM-DD format
- * @param {string} time - time, in HH:MM 24-hr format 
+ * @param {string} time - time, in HH:MM:SS 24-hr format 
  * @param {Object} optionalObject - any of the additional optional parameters,
  *  passed along in a collective object. The additional parameters include:
  *      - url {string}: URL for a website of the event.
@@ -35,8 +36,8 @@ import { toFormData } from "./api_requests";
  *      - comments {string}: Any additional comments.
  * @returns {Object}: The HTTP OK code, status, and JSON data.
  */
-async function createEvent(name, streetAddress, cityName, state, zip, forStudentsOnly, date, time, optionalObject) {
-    const mandatoryFields = { "name" : name, "address" : address, "city" : city, "state" : state, "zip" : zip, "is_students_only" : forStudentsOnly, "date_and_time" : `${date} ${time}` };
+export async function createEvent(name, streetAddress, cityName, state, zip, forStudentsOnly, date, time, optionalObject = null) {
+    const mandatoryFields = { "name" : name, "address" : streetAddress, "city" : cityName, "state" : state, "zip" : zip, "is_students_only" : forStudentsOnly, "date_and_time" : `${date} ${time}` };
     const res = await fetch("/api/community/events", {
         method: "POST",
         headers: authHeaders(),
@@ -44,6 +45,24 @@ async function createEvent(name, streetAddress, cityName, state, zip, forStudent
       });
       return { ok: res.ok, status: res.status, data: await res.json() };
 }
+
+/**
+ * Fetches all events that have not happened yet based on the current date. 
+ * 
+ * @returns {Object} The object containing all future event data.
+ */
+export async function getAllEvents() {
+    try {
+        const res = await fetch("/api/community/events");
+        if (!res.ok) 
+            throw new Error(res.status);
+        return await res.json();
+    } catch (err) {
+        console.log("ERROR: getAllEvents(): " + err);
+        return null;
+    }
+}
+
 
 // /**
 //  * Grabs all user-submitted pantries.
@@ -85,15 +104,6 @@ async function createEvent(name, streetAddress, cityName, state, zip, forStudent
 
 
 // export function getUserPantriesSupportingDiets(diets) {
-
-// }
-
-// /* 
-//  * fetches all events that have not happened yet based on date field. 
-//  * optionally can delete events that have passed from the db so it doesnt 
-//  * get too large but probably not an issue with our scope
-//  */
-// export function fetchEvents() {
 
 // }
 
