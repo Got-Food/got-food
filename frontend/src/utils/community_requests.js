@@ -115,6 +115,81 @@ export async function updateEvent(id, optionalObject) {
 }
 
 /**
+ * Creates a new user pantry in the database based on the given mandatory fields
+ * and optional key/value pairs.
+ *
+ * @param {string} name - the name of the pantry.
+ * @param {string} address - the street address of its location.
+ * @param {string} city - the name of the location's city.
+ * @param {string} state - the abbreviated state of the pantry's location.
+ * @param {string} zip - the 5-digit ZIP of the pantry's location.
+ * @param {boolean} has_variable_hours - whether or not the pantry has variable hours.
+ * @param {Object} optionals - any optional parameters that you would like to add.
+ * These can include the following:
+ * - url: the location's website.
+ * - phone: the location's phone number.
+ * - email: the location's email address.
+ * - eligibility: an array of the pantry's serviced zip codes, i.e. zip codes they serve.
+ * - supported_diets: an array of the specific diets that the pantry serves. You can also
+ *    use ["ANY"] if the pantry will accommodate any concerns.
+ * - comments: any additional useful comments.
+ *
+ * @returns {Object} The success status and data created by the query.
+ */
+export async function createUserPantry(
+  name,
+  address,
+  city,
+  state,
+  zip,
+  has_variable_hours,
+  optionals,
+) {
+  const mandatoryFields = {
+    name: name,
+    address: address,
+    city: city,
+    state: state,
+    zip: zip,
+    has_variable_hours: has_variable_hours,
+  };
+  const res = await fetch("/api/community/pantries", {
+    method: "POST",
+    body: toFormData({ ...mandatoryFields, ...optionals }),
+  });
+  return { ok: res.ok, status: res.status, data: await res.json() };
+}
+
+/**
+ * Adds an hourly range listing to the specified user pantry.
+ * @param {number} pantryId - the ID of the user pantry whose hours we will add to.
+ * @param {string} dayOfWeek - the weekday that this time range applies to.
+ * @param {string} status - the status of this range, i.e. "OPEN" or "CLOSED."
+ * @param {string} openTime - the open time of the range, in HH:MM <AM/PM> format.
+ * @param {string} closeTime - the close time of the range, in HH:MM <AM/PM> format.
+ * @returns {Object} The state of success of the function, as well as the data inserted.
+ */
+export async function createUserPantryHours(
+  pantryId,
+  dayOfWeek,
+  status,
+  openTime,
+  closeTime,
+) {
+  const res = await fetch(`/api/community/pantries/${pantryId}/hours`, {
+    method: "POST",
+    body: toFormData({
+      pantry_id: pantryId,
+      day_of_week: dayOfWeek,
+      status: status,
+      open_time: openTime,
+      close_time: closeTime,
+    }),
+  });
+  return { ok: res.ok, status: res.status, data: await res.json() };
+}
+
+/**
  * Grabs all user-submitted pantries.
  *
  * @returns {Object} An object containing all user-submitted pantries stored

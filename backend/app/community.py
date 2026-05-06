@@ -15,7 +15,14 @@ from psycopg2 import errors
 from .auth import admin_required
 from .cache import cache
 from .database import database as db
-from .models import UserPantries, UserPantryHours, SupportedDiet, Weekday, UserEvents
+from .models import (
+    UserPantries,
+    UserPantryHours,
+    SupportedDiet,
+    Weekday,
+    UserEvents,
+    HourlyRangeStatus,
+)
 from .utils import get_coordinates
 
 community = Blueprint("community", __name__)
@@ -236,8 +243,8 @@ def post_user_pantries():
 
     # Clear stale cached values on success
     cache.delete_memoized(get_user_pantries_memoized)
-    # cache.delete_memoized(get_pantry_by_id, pantry.id)
-    # cache.delete_memoized(get_pantry_hours, pantry.id)
+    cache.delete_memoized(get_user_pantry, pantry.id)
+    cache.delete_memoized(get_user_pantry_hours, pantry.id)
     return jsonify(pantry.serialize()), 201
 
 
@@ -261,6 +268,71 @@ def get_user_pantry_hours(pantry_id):
     hours = db.session.execute(query).scalars().all()
     hours = [h.serialize() for h in hours]
     return jsonify(hours)
+
+
+@community.route("/pantries/<int:pantry_id>/hours", methods=["POST"])
+@admin_required
+def add_user_pantry_hours(pantry_id):
+    """Inserts an hourly listing for user pantry with ID pantry_id.
+
+    Note that for submitted data, a submitted pantry ID in the form must align
+    with the pantry ID given in the URI. Otherwise, we throw 400 BAD REQUEST.
+    """
+
+    hours = UserPantryHours(
+        pantry_id=request.form.get("pantry_id", type=int),
+        day_of_week=request.form.get("day_of_week", type=Weekday),
+        status=request.form.get("status", type=HourlyRangeStatus),
+        open_time=request.form.get("open_time"),
+        close_time=request.form.get("close_time"),
+    )
+
+    # Ensure URI pantry ID and form data pantry ID are in alignment
+    if hours.pantry_id is not None and hours.pantry_id != pantry_id:
+        abort(
+            400,
+            f"The pantry_id {{{hours.pantry_id}}} provided in the submitted form does not patch that of the URI, {{{pantry_id}}}. Please ensure that they are equivalent.",
+        )
+
+    # Parse datetimes, if there are any. Ensure that they are of the form
+    # HH:MM <AM/PM>.
+    try:
+        if hours.open_time is not None:
+            hours.open_time = datetime.strptime(hours.open_time, "%I:%M %p")
+        if hours.close_time is not None:
+            hours.close_time = datetime.strptime(hours.close_time, "%I:%M %p")
+    except ValueError as e:
+        abort(
+            400,
+            f"Open and closing times need to be of the form HH:MM <AM/PM>, not '{e.args[0]}'.",
+        )
+
+    # Insert into DB and handle specific errors
+    try:
+        db.session.add(hours)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        match e.orig:
+            case errors.ForeignKeyViolation():
+                abort(
+                    404, f"Given foreign key pantry ID {hours.pantry_id} was not found."
+                )
+            case errors.UniqueViolation():
+                abort(
+                    409,
+                    "The given hours entry's unique values conflict with another entry in the database.",
+                )
+            case _:
+                abort(
+                    400,
+                    "Malformed pantry hours fields. Ensure that all fields are of the correct format.",
+                )
+
+    cache.delete_memoized(get_user_pantries)
+    cache.delete_memoized(get_user_pantry, pantry_id)
+    cache.delete_memoized(get_user_pantry_hours, pantry_id)
+    return jsonify(hours.serialize()), 201
 
 
 @community.route("/events", methods=["GET"])
