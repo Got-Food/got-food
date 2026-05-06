@@ -384,13 +384,13 @@ def post_user_events():
         except NumberParseException:
             abort(
                 400,
-                f"If submitting a phone number, the user must submit a valid format. Given phone number {pantry.phone} is of incorrect format.",
+                f"If submitting a phone number, the user must submit a valid format. Given phone number {event.phone} is of incorrect format.",
             )
         else:
             if not phonenumbers.is_valid_number(num):
                 abort(
                     400,
-                    f"If submitting a phone number, the user must submit a valid number. Given phone number {pantry.phone} is invalid.",
+                    f"If submitting a phone number, the user must submit a valid number. Given phone number {event.phone} is invalid.",
                 )
 
     if event.email:
@@ -500,13 +500,13 @@ def update_event(event_id):
         except NumberParseException:
             abort(
                 400,
-                f"If submitting a phone number, the user must submit a valid format. Given phone number {pantry.phone} is of incorrect format.",
+                f"If submitting a phone number, the user must submit a valid format. Given phone number {event.phone} is of incorrect format.",
             )
         else:
             if not phonenumbers.is_valid_number(num):
                 abort(
                     400,
-                    f"If submitting a phone number, the user must submit a valid number. Given phone number {pantry.phone} is invalid.",
+                    f"If submitting a phone number, the user must submit a valid number. Given phone number {event.phone} is invalid.",
                 )
 
     if event.email:
