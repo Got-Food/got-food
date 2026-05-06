@@ -3,7 +3,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.test
-    command: pytest -s
+    command: pytest
     environment:
       - FLASK_DEBUG=1
       - DATABASE_URL=postgresql://test:test@db_test:5432/db_test
