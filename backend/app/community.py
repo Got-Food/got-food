@@ -242,7 +242,7 @@ def post_user_pantries():
 
 
 @community.route("/events", methods=["GET"])
-@cache.cached()
+@cache.memoize()
 def get_events():
     """Obtains all user-entered events that have not occurred yet."""
     query = db.select(UserEvents).order_by(UserEvents.id)
@@ -368,8 +368,147 @@ def post_user_events():
     # cache.delete_memoized(get_user_events_memoized)
     # cache.delete_memoized(get_pantry_by_id, pantry.id)
     # cache.delete_memoized(get_pantry_hours, pantry.id)
-    cache.delete(get_events)
+    cache.delete_memoized(get_events)
     return jsonify(event.serialize()), 201
+
+
+@community.route("/events/<int:event_id>", methods=["PUT"])
+@admin_required
+def update_event(event_id):
+    """Updates the fields of a specific event with id event_id, based on given
+    form data.
+
+    Note that this function uses getlist() for supported_diets,
+    while the GET functions use get() and split(..., ','). This is because
+    the fields are passed as form data here, which lends itself well to the getlist()
+    format rather than the CSV approach we take in the GET functions. 
+    See the api.py docstrings for more detail.
+    """
+    event = db.get_or_404(UserEvents, event_id)
+    old_address = event.address
+    old_city = event.city
+    old_state = event.state
+    old_zip = event.zip
+    old_datetime = event.date_and_time
+
+    # Update only fields that were provided
+    fields = [
+        "name",
+        "address",
+        "city",
+        "state",
+        "zip",
+        "is_students_only",
+        "date_and_time",
+        "url",
+        "phone",
+        "email",
+        "supported_diets",
+        "comments",
+    ]
+    for field in fields:
+        value = request.form.get(field)
+        if value is not None:
+            setattr(event, field, value)
+
+    # Recompute lat + long if address info has changed
+    if (
+        event.address != old_address
+        or event.city != old_city
+        or event.state != old_state
+        or event.zip != old_zip
+    ):
+        coords = get_coordinates(event.address, event.city, event.state, event.zip)
+        if coords is not None:
+            event.latitude, event.longitude = coords
+        else:
+            abort(
+                500,
+                f"Coordinates were not able to be obtained from the given address.",
+            )
+
+    # Validate mandatory datetime
+    if event.date_and_time != old_datetime:
+        event.date_and_time = datetime.strptime(
+            event.date_and_time, "%Y-%m-%d %H:%M:%S"
+        )
+
+    # Validate optional parameters
+    if event.url is not None and not validators.url(event.url):
+        abort(
+            400,
+            f"User submitted invalid URL '{event.url}'. URL needs to be of proper format.",
+        )
+
+    if event.phone:
+        try:
+            num = phonenumbers.parse(event.phone)
+        except NumberParseException:
+            abort(
+                400,
+                f"If submitting a phone number, the user must submit a valid format. Given phone number {pantry.phone} is of incorrect format.",
+            )
+        else:
+            if not phonenumbers.is_valid_number(num):
+                abort(
+                    400,
+                    f"If submitting a phone number, the user must submit a valid number. Given phone number {pantry.phone} is invalid.",
+                )
+
+    if event.email:
+        try:
+            validate_email(event.email)
+        except EmailNotValidError:
+            abort(400, f"User email '{event.email}' is of an invalid format.")
+
+    # Convert supported_diets to enum equivalent
+    supported_diets = request.form.getlist("supported_diets")
+    if supported_diets:
+        try:
+            event.supported_diets = [SupportedDiet(d.upper()) for d in supported_diets]
+        except (KeyError, ValueError) as e:
+            abort(
+                400,
+                f"Given diet(s) {e.args[0]} do not match available choices: {", ".join(SupportedDiet._member_names_)}",
+            )
+
+    # Convert is_students_only to bool equivalent
+    is_students_only = request.form.get("is_students_only")
+    if is_students_only is not None:
+        match is_students_only.casefold():
+            case "true":
+                event.is_students_only = True
+            case "false":
+                event.is_students_only = False
+            case _:
+                abort(
+                    400,
+                    f"is_students_only must be boolean, not {{{is_students_only}}}.",
+                )
+
+    # Insert into DB
+    try:
+        db.session.commit()
+    except (IntegrityError, DataError) as e:
+        db.session.rollback()
+        match e.orig:
+            case errors.UniqueViolation():
+                abort(
+                    409,
+                    "Given event data conflicts with an entry already in the database.",
+                )
+            case errors.NotNullViolation():
+                abort(400, "A mandatory field was passed in as null.")
+            case _:
+                abort(
+                    400,
+                    "Malformed event fields. Ensure that all fields are of the correct format.",
+                )
+
+    # Clear stale cached values on success
+    cache.delete_memoized(get_events)
+    return jsonify(event.serialize()), 200
+
 
 @community.route("/events/<int:event_id>", methods=["DELETE"])
 @admin_required
@@ -388,5 +527,5 @@ def delete_event(event_id):
     elif res == 0:
         abort(404, f"The targeted resource of event ID {event_id} was not found.")
     db.session.commit()
-    cache.delete(get_events)
+    cache.delete_memoized(get_events)
     return {}, 200
