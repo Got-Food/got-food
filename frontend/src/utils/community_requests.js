@@ -31,7 +31,7 @@ export async function createEvent(
     name: name,
     full_address: fullAddress,
     is_students_only: forStudentsOnly,
-    date_and_time: `${date} ${time}`,
+    date_and_time: `${date} ${time}:00`,
   };
   const res = await fetch("/api/community/events", {
     method: "POST",
