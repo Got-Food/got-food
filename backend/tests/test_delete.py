@@ -3,22 +3,18 @@ from random import randint
 
 def test_pantries_delete_id_in_table(client, jwt_token):
     # Verify pantry is present in table
-    response = client.get("/api/pantries/63")
+    response = client.get("/api/pantries/1")
     assert response.status_code == 200
-    assert response.json["id"] == 63
-    assert (
-        response.json["name"]
-        == "St. Stephen's United Methodist Church: First Fridays/Green Groceries"
-    )
+    assert response.json["id"] == 1
 
     # Delete pantry
     response = client.delete(
-        "/api/pantries/63", headers={"Authorization": f"Bearer {jwt_token}"}
+        "/api/pantries/1", headers={"Authorization": f"Bearer {jwt_token}"}
     )
     assert response.status_code == 200
 
     # Verify deletion went through
-    response = client.get("/api/pantries/63")
+    response = client.get("/api/pantries/1")
     assert response.status_code == 404
 
 

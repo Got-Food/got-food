@@ -1,3 +1,4 @@
+import random
 from copy import deepcopy
 
 # Used in testing the "Pantries" table
@@ -510,15 +511,12 @@ def test_hours_given_primary_id(client, jwt_token):
 
 
 def test_hours_colliding_entry(client, jwt_token):
+    # choose random hours entry for pantry with ID 1 and try to POST it
+    hours = client.get("/api/pantries/1/hours")
+    collider = random.choice(hours.json)
     response = client.post(
-        f"/api/pantries/63/hours",
-        data={
-            "pantry_id": 63,
-            "day_of_week": "WEDNESDAY",
-            "status": "CLOSED",
-            "open_time": None,
-            "close_time": None,
-        },
+        f"/api/pantries/1/hours",
+        data=collider,
         headers={"Authorization": f"Bearer {jwt_token}"},
     )
     assert response.status_code == 409
