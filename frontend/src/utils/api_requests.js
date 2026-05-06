@@ -240,7 +240,7 @@ function authHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-function toFormData(params) {
+export function toFormData(params) {
   const formData = new FormData();
   Object.entries(params).forEach(([k, v]) => {
     if (Array.isArray(v)) {

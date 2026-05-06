@@ -10,11 +10,34 @@ monkey.patch_all()
 import pytest
 import requests
 import time
-import os
 from app import create_app, database as db
 from flask_jwt_extended import create_access_token
 from gevent.pywsgi import WSGIServer
 from unittest.mock import patch
+
+MOCKED_COORDS = (38.838026363222, -77.0487012623659)
+"""Coordinates that are returned in lieu of actual Geocode API calls to grab
+coordinates from an address. They lead to the Innovation Campus, in Alexandria, 
+VA.
+"""
+
+
+@pytest.fixture()
+def mock_geocode():
+    """Simulates a call to the Geocode API by patching the requests.get call
+    to the API with a return of the mock coordinates.
+
+    This prevents us from consuming the API key's limit when running tests.
+    """
+    with patch("app.utils.requests.get") as mock:
+        mock.return_value.json.return_value = {
+            "RESULTS": {
+                "result": {
+                    "coordinates": {"lat": MOCKED_COORDS[0], "lon": MOCKED_COORDS[1]}
+                }
+            }
+        }
+        yield
 
 
 @pytest.fixture(scope="session")
@@ -106,3 +129,118 @@ def rollback_after_test(app):
         # roll back DB changes
         db.session.rollback()
         db.session.remove()
+
+
+@pytest.fixture()
+def populate_user_tables(client, mock_geocode):
+    # Populate Pantries
+    client.post(
+        "/api/community/pantries",
+        data={
+            "name": "Test Creation User Pantry 1",
+            "address": "3625 Potomac Ave",
+            "city": "Alexandria",
+            "state": "VA",
+            "zip": "22305",
+            "supported_diets": ["HALAL"],
+            "has_variable_hours": False,
+        },
+    )
+
+    client.post(
+        "/api/community/pantries",
+        data={
+            "name": "Test Creation User Pantry 2",
+            "address": "3625 Potomac Ave",
+            "city": "Alexandria",
+            "state": "VA",
+            "zip": "22305",
+            "eligibility": ["ALL"],
+            "has_variable_hours": True,
+        },
+    )
+
+    client.post(
+        "/api/community/pantries",
+        data={
+            "name": "Test Creation User Pantry 3",
+            "address": "3625 Potomac Ave",
+            "city": "Alexandria",
+            "state": "VA",
+            "zip": "22305",
+            "eligibility": ["22305"],
+            "supported_diets": ["KOSHER"],
+            "has_variable_hours": False,
+        },
+    )
+
+    # Populate the UserHours table
+    client.post(
+        "/api/community/pantries/1",
+        data={
+            "pantry_id": 1,
+            "day_of_week": "MONDAY",
+            "status": "CLOSED",
+        },
+    )
+
+    client.post(
+        "/api/community/pantries/2",
+        data={
+            "pantry_id": 2,
+            "day_of_week": "WEDNESDAY",
+            "status": "CLOSED",
+        },
+    )
+
+    client.post(
+        "/api/community/pantries/3",
+        data={
+            "pantry_id": 3,
+            "day_of_week": "SATURDAY",
+            "status": "CLOSED",
+        },
+    )
+
+    # Populate the UserEvents table
+    client.post(
+        "/api/community/events",
+        data={
+            "name": "Test Creation User Event 1",
+            "address": "3625 Potomac Ave",
+            "city": "Alexandria",
+            "state": "VA",
+            "zip": "22305",
+            "is_students_only": True,
+            "supported_diets": ["HALAL"],
+            "date_and_time": "2026-05-05 12:00:00",
+        },
+    )
+
+    client.post(
+        "/api/community/events",
+        data={
+            "name": "Test Creation User Event 2",
+            "address": "3625 Potomac Ave",
+            "city": "Alexandria",
+            "state": "VA",
+            "zip": "22305",
+            "is_students_only": True,
+            "supported_diets": ["KOSHER"],
+            "date_and_time": "2026-05-05 12:00:00",
+        },
+    )
+
+    client.post(
+        "/api/community/events",
+        data={
+            "name": "Test Creation User Event 3",
+            "address": "3625 Potomac Ave",
+            "city": "Alexandria",
+            "state": "VA",
+            "zip": "22305",
+            "is_students_only": False,
+            "supported_diets": ["HALAL"],
+            "date_and_time": "2026-05-05 12:00:00",
+        },
+    )

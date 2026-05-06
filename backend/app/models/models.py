@@ -107,3 +107,184 @@ class PantryHours(db.Model):
             "close_time": close_time,
         }
 
+
+class UserPantries(db.Model):
+    """An ORM object for a row in the user_pantries table.
+
+    Defines a serialize() function that can be used with jsonify() to return
+    the results of a query, or the data from some row in the pantries table,
+    to the user through Flask.
+    """
+
+    __tablename__ = "user_pantries"
+
+    # Internal primary key created + serialized by DB
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Mandatory user-given fields
+    name = db.Column(db.String(255), nullable=False)
+    address = db.Column(db.String(255), nullable=False)
+    city = db.Column(db.String(100), nullable=False)
+    state = db.Column(db.String(2), nullable=False)
+    zip = db.Column(db.String(10), nullable=False)
+    has_variable_hours = db.Column(db.Boolean, nullable=False)
+
+    # Mandatory, but obtained programmatically
+    latitude = db.Column(db.Numeric(15, 13), nullable=False)
+    longitude = db.Column(db.Numeric(16, 13), nullable=False)
+
+    # Optional user-given communication fields
+    url = db.Column(db.Text)
+    phone = db.Column(db.String(25))
+    email = db.Column(db.String(255))
+    eligibility = db.Column(postgresql.ARRAY(db.String(10)))
+    supported_diets = db.Column(
+        postgresql.ARRAY(db.Enum(SupportedDiet, name="supported_diet"))
+    )
+    comments = db.Column(db.Text)
+
+    # Internal timestamp, user won't provide this
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    hours = relationship("UserPantryHours")
+
+    def serialize(self) -> dict:
+        diets = (
+            [x.serialize() for x in self.supported_diets]
+            if self.supported_diets is not None
+            else None
+        )
+
+        hrs = [h.serialize() for h in self.hours] if self.hours is not None else None
+
+        return {
+            "id": self.id,
+            "name": self.name,
+            "address": self.address,
+            "city": self.city,
+            "state": self.state,
+            "zip": self.zip,
+            "has_variable_hours": self.has_variable_hours,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "url": self.url,
+            "phone": self.phone,
+            "email": self.email,
+            "eligibility": self.eligibility,
+            "supported_diets": diets,
+            "comments": self.comments,
+            "created_at": self.created_at,
+            "hours": hrs,
+        }
+
+
+class UserPantryHours(db.Model):
+    """An ORM object for a row in the user_pantry_hours table.
+
+    Defines a serialize() function that can be used with jsonify() to return
+    the results of a query, or the data from some row in the pantries table,
+    to the user through Flask.
+    """
+
+    __tablename__ = "user_pantry_hours"
+
+    # Internal primary key created by DB
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Mandatory client-provided fields
+    pantry_id = db.Column(
+        db.Integer,
+        db.ForeignKey("user_pantries.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    day_of_week = db.Column(db.Enum(Weekday, name="weekday"), nullable=False)
+    status = db.Column(
+        db.Enum(HourlyRangeStatus, name="hourly_range_status"), nullable=False
+    )
+    open_time = db.Column(db.Time)
+    close_time = db.Column(db.Time)
+
+    def serialize(self) -> dict:
+        # Convert times to readable 12-hr AM/PM times
+        open_time = (
+            self.open_time.strftime("%-I:%M %p") if self.open_time is not None else None
+        )
+        close_time = (
+            self.close_time.strftime("%-I:%M %p")
+            if self.close_time is not None
+            else None
+        )
+
+        return {
+            "id": self.id,
+            "pantry_id": self.pantry_id,
+            "day_of_week": self.day_of_week.name,
+            "status": self.status.name,
+            "open_time": open_time,
+            "close_time": close_time,
+        }
+
+
+class UserEvents(db.Model):
+    """An ORM object for a row in the user_events table.
+
+    Defines a serialize() function that can be used with jsonify() to return
+    the results of a query, or the data from some row in the pantries table,
+    to the user through Flask.
+    """
+
+    __tablename__ = "user_events"
+
+    # Internal primary key created + serialized by DB
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Mandatory user-given fields
+    name = db.Column(db.String(255), nullable=False)
+    address = db.Column(db.String(255), nullable=False)
+    city = db.Column(db.String(100), nullable=False)
+    state = db.Column(db.String(2), nullable=False)
+    zip = db.Column(db.String(10), nullable=False)
+    is_students_only = db.Column(db.Boolean, nullable=False)
+    date_and_time = db.Column(db.DateTime, nullable=False)
+
+    # Mandatory, but obtained programmatically
+    latitude = db.Column(db.Numeric(15, 13), nullable=False)
+    longitude = db.Column(db.Numeric(16, 13), nullable=False)
+
+    # Optional user-given communication fields
+    url = db.Column(db.Text)
+    phone = db.Column(db.String(25))
+    email = db.Column(db.String(255))
+    supported_diets = db.Column(
+        postgresql.ARRAY(db.Enum(SupportedDiet, name="supported_diet"))
+    )
+    comments = db.Column(db.Text)
+
+    # Internal timestamp, user won't provide this
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    def serialize(self) -> dict:
+        diets = (
+            [x.serialize() for x in self.supported_diets]
+            if self.supported_diets is not None
+            else None
+        )
+
+        return {
+            "id": self.id,
+            "name": self.name,
+            "address": self.address,
+            "city": self.city,
+            "state": self.state,
+            "zip": self.zip,
+            "is_students_only": self.is_students_only,
+            "date_and_time": self.date_and_time,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "url": self.url,
+            "phone": self.phone,
+            "email": self.email,
+            "supported_diets": diets,
+            "comments": self.comments,
+            "created_at": self.created_at,
+        }
