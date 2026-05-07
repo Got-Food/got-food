@@ -20,5 +20,6 @@ jobs:
             
             - name: Run backend pytest test suite
               env:
+                GEOCODE_API_KEY: ${{ secrets.GEOCODE_API_KEY }}
                 JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
               run:  docker compose -f ./docker-compose.test.yml up --abort-on-container-exit

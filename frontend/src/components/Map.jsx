@@ -56,7 +56,7 @@ function FlyToMarker({ selectedPantry }) {
           parseFloat(selectedPantry.latitude),
           parseFloat(selectedPantry.longitude),
         ],
-        11,
+        14,
         { duration: 1.2 },
       );
     }

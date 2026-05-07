@@ -6,5 +6,8 @@ gunicorn==25.3.0
 flask-jwt-extended==4.7.1
 flask-cors==5.0.1
 flask-talisman==1.1.0
+validators==0.35.0
 requests
 python-dotenv
+phonenumbers
+email-validator

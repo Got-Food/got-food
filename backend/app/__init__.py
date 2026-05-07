@@ -68,8 +68,9 @@ def create_app() -> Flask:
     # -------------------------
     from .api import api
     from .auth import auth
+    from .community import community
 
     app.register_blueprint(api, url_prefix="/api")
     app.register_blueprint(auth, url_prefix="/api/auth")
-
+    app.register_blueprint(community, url_prefix="/api/community")
     return app

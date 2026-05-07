@@ -195,6 +195,23 @@ export async function getPantriesThatSupportDiets(diets) {
   return await getPantries(undefined, undefined, diets, false);
 }
 
+export function authHeaders() {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export function toFormData(params) {
+  const formData = new FormData();
+  Object.entries(params).forEach(([k, v]) => {
+    if (Array.isArray(v)) {
+      v.forEach((item) => formData.append(k, item));
+    } else {
+      formData.append(k, v);
+    }
+  });
+  return formData;
+}
+
 /**
  * Adds a pantry with data specified in jsonParams to the database.
  *
@@ -231,27 +248,6 @@ export async function getPantriesThatSupportDiets(diets) {
  *  has_variable_hours: false,
  * });
  */
-function getToken() {
-  return localStorage.getItem("gf_token");
-}
-
-function authHeaders() {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-function toFormData(params) {
-  const formData = new FormData();
-  Object.entries(params).forEach(([k, v]) => {
-    if (Array.isArray(v)) {
-      v.forEach((item) => formData.append(k, item));
-    } else {
-      formData.append(k, v);
-    }
-  });
-  return formData;
-}
-
 export async function addPantry(jsonParams) {
   const res = await fetch("/api/pantries", {
     method: "POST",
@@ -302,4 +298,8 @@ export async function getCoords(address) {
     `/api/geocode?address=${encodeURIComponent(address)}`,
   );
   return await res.json();
+}
+
+function getToken() {
+  return localStorage.getItem("gf_token");
 }
