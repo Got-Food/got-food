@@ -248,14 +248,16 @@ function Resources() {
 }
 
 function EventCard({ event, onDelete, isAdmin }) {
-  const formatted = new Date(event.date_and_time).toLocaleString("en-US", {
+  const raw = new Date(event.date_and_time);
+  const formatted = new Intl.DateTimeFormat("en-US", {
     weekday: "short",
     month: "short",
     day: "numeric",
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
-  });
+    timeZone: "UTC",
+  }).format(raw);
 
   const diets = event.supported_diets || [];
 
