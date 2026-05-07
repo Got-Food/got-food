@@ -44,8 +44,13 @@ services:
       - POSTGRES_USER=dev_user
       - POSTGRES_PASSWORD=dev_password
       - POSTGRES_DB=gotfood_dev_database
+    volumes:
+      - gotfood_db_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U dev_user -d gotfood_dev_database"]
       interval: 5s
       timeout: 5s
       retries: 10
+
+volumes:
+  gotfood_db_data:
