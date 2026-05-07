@@ -72,6 +72,28 @@ export function MenuItem({
             icon={faLocationArrow}
           />
         </button>
+
+        {isAdmin && (
+          <div
+            className="menu-item-admin-actions"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="menu-item-admin-btn menu-item-edit-btn"
+              onClick={() => onEdit?.(details)}
+              title="Edit pantry"
+            >
+              Edit
+            </button>
+            <button
+              className="menu-item-admin-btn menu-item-delete-btn"
+              onClick={() => onDelete?.(details.id)}
+              title="Delete pantry"
+            >
+              Delete
+            </button>
+          </div>
+        )}
       </div>
 
       {isAdmin && (

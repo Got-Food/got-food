@@ -101,6 +101,60 @@ const MapFilters = ({ onSearch }) => {
         </div>
       </div>
 
+      <div className="filter-section">
+        <label className="filter-checkbox-label">
+          <input
+            type="checkbox"
+            checked={useRadius}
+            onChange={(e) => setUseRadius(e.target.checked)}
+            className="filter-checkbox-input"
+            disabled={!searchLocation.trim()}
+          />
+          <span
+            className={`filter-custom-checkbox${useRadius ? " checked" : ""}`}
+          >
+            {useRadius && (
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                <path
+                  d="M2 6l3 3 5-5"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </span>
+          <span className="filter-checkbox-text">
+            Display only those within {radiusMiles} mile
+            {radiusMiles !== 1 ? "s" : ""}
+          </span>
+        </label>
+
+        <input
+          type="range"
+          min="1"
+          max="100"
+          step="1"
+          value={radiusMiles}
+          onChange={(e) => setRadiusMiles(Number(e.target.value))}
+          className="filter-range-input"
+          disabled={!useRadius || !searchLocation.trim()}
+        />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: "0.75rem",
+            color: "#999",
+            opacity: useRadius ? 1 : 0.4,
+          }}
+        >
+          <span>1 mi</span>
+          <span>100 mi</span>
+        </div>
+      </div>
+
       <div className="filter-divider" />
 
       {/* Dietary Restrictions */}

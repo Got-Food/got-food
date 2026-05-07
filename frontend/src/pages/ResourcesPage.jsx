@@ -103,7 +103,14 @@ function Resources() {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: "white" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+        backgroundColor: "white",
+      }}
+    >
       <Header />
       <Navbar />
       <main style={{ maxWidth: 720, margin: "0 auto", width: "100%", padding: "2.5rem 1.5rem" }}>
@@ -176,10 +183,22 @@ function Resources() {
           </Row>
           <Row>
             <Field label="Date *">
-              <input name="date" value={form.date} onChange={handleChange} type="date" style={inputStyle} />
+              <input
+                name="date"
+                value={form.date}
+                onChange={handleChange}
+                type="date"
+                style={inputStyle}
+              />
             </Field>
             <Field label="Time *">
-              <input name="time" value={form.time} onChange={handleChange} type="time" style={inputStyle} />
+              <input
+                name="time"
+                value={form.time}
+                onChange={handleChange}
+                type="time"
+                style={inputStyle}
+              />
             </Field>
           </Row>
           <Row full>
@@ -230,7 +249,13 @@ function Resources() {
           </Field>
         </Section>
 
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "2rem" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginTop: "2rem",
+          }}
+        >
           <button
             onClick={handleSubmit}
             disabled={loading}
@@ -265,15 +290,36 @@ function EventCard({ event, onDelete, isAdmin }) {
   const diets = event.supported_diets || [];
 
   return (
-    <div style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: "1.25rem 1.5rem", backgroundColor: "white" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+    <div
+      style={{
+        border: "1px solid #e5e7eb",
+        borderRadius: 10,
+        padding: "1.25rem 1.5rem",
+        backgroundColor: "white",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+        }}
+      >
         <div>
           <h2 style={{ fontSize: 17, fontWeight: 600, color: "#111", margin: 0 }}>{event.name}</h2>
           <p style={{ fontSize: 13, color: "#6b7280", margin: "2px 0 0" }}>{event.full_address}</p>
         </div>
         {isAdmin && (<button
           onClick={() => onDelete(event.id)}
-          style={{ fontSize: 12, color: "#ef4444", background: "none", border: "none", cursor: "pointer", marginLeft: 12, padding: 0 }}
+          style={{
+            fontSize: 12,
+            color: "#ef4444",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            marginLeft: 12,
+            padding: 0,
+          }}
         >
           Remove
         </button>)}
@@ -307,7 +353,18 @@ function EventCard({ event, onDelete, isAdmin }) {
 function Section({ title, children }) {
   return (
     <div style={{ marginBottom: "1.75rem" }}>
-      <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "#9ca3af", marginBottom: "0.75rem", paddingBottom: "0.5rem", borderBottom: "1px solid #f3f4f6" }}>
+      <p
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "#9ca3af",
+          marginBottom: "0.75rem",
+          paddingBottom: "0.5rem",
+          borderBottom: "1px solid #f3f4f6",
+        }}
+      >
         {title}
       </p>
       {children}
@@ -317,7 +374,14 @@ function Section({ title, children }) {
 
 function Row({ children, full }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: full ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 12 }}>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: full ? "1fr" : "1fr 1fr",
+        gap: 12,
+        marginBottom: 12,
+      }}
+    >
       {children}
     </div>
   );
