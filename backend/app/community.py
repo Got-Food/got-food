@@ -3,6 +3,7 @@ import phonenumbers
 from phonenumbers import NumberParseException
 
 import validators
+from validators import ValidationError
 from datetime import datetime
 from email_validator import validate_email, EmailNotValidError
 from flask import Blueprint, request, abort, jsonify
@@ -160,7 +161,9 @@ def post_user_pantries():
     )
 
     # Validate optional parameters
-    if pantry.url is not None and not validators.url(pantry.url):
+    if pantry.url is not None and isinstance(
+        validators.url(pantry.url), ValidationError
+    ):
         abort(
             400,
             f"User submitted invalid URL '{pantry.url}'. URL needs to be of proper format.",
@@ -298,7 +301,9 @@ def update_user_pantry(pantry_id):
         if value is not None:
             setattr(pantry, field, value)
 
-    if pantry.url is not None and not validators.url(pantry.url):
+    if pantry.url is not None and isinstance(
+        validators.url(pantry.url), ValidationError
+    ):
         abort(
             400,
             f"User submitted invalid URL '{pantry.url}'. URL needs to be of proper format.",
@@ -407,14 +412,12 @@ def get_user_pantry_hours(pantry_id):
 
 
 @community.route("/pantries/<int:pantry_id>/hours", methods=["POST"])
-@admin_required
 def add_user_pantry_hours(pantry_id):
     """Inserts an hourly listing for user pantry with ID pantry_id.
 
     Note that for submitted data, a submitted pantry ID in the form must align
     with the pantry ID given in the URI. Otherwise, we throw 400 BAD REQUEST.
     """
-
     hours = UserPantryHours(
         pantry_id=request.form.get("pantry_id", type=int),
         day_of_week=request.form.get("day_of_week", type=Weekday),
@@ -427,8 +430,11 @@ def add_user_pantry_hours(pantry_id):
     if hours.pantry_id is not None and hours.pantry_id != pantry_id:
         abort(
             400,
-            f"The pantry_id {{{hours.pantry_id}}} provided in the submitted form does not patch that of the URI, {{{pantry_id}}}. Please ensure that they are equivalent.",
+            f"The pantry_id {{{hours.pantry_id}}} provided in the submitted form does not match that of the URI, {{{pantry_id}}}. Please ensure that they are equivalent.",
         )
+
+    # Try to get target pantry
+    pantry = db.get_or_404(UserPantries, pantry_id)
 
     # Parse datetimes, if there are any. Ensure that they are of the form
     # HH:MM <AM/PM>.
@@ -441,6 +447,13 @@ def add_user_pantry_hours(pantry_id):
         abort(
             400,
             f"Open and closing times need to be of the form HH:MM <AM/PM>, not '{e.args[0]}'.",
+        )
+
+    # Only insert varied hours ranges if the pantry supports varied hours
+    if hours.status == HourlyRangeStatus.OPEN and hours.close_time is None and not pantry.has_variable_hours:
+        abort(
+            400,
+            "Attempting to insert a varied hour range to a pantry that does not support varied hours.",
         )
 
     # Insert into DB and handle specific errors
@@ -590,13 +603,21 @@ def post_user_events():
     )
 
     # Validate mandatory datetime
-    event.date_and_time = datetime.strptime(event.date_and_time, "%Y-%m-%d %H:%M:%S")
-
-    # Validate optional parameters
-    if event.url is not None and not validators.url(event.url):
+    try:
+        event.date_and_time = datetime.strptime(
+            event.date_and_time, "%Y-%m-%d %H:%M:%S"
+        )
+    except ValueError:
         abort(
             400,
-            f"User submitted invalid URL '{event.url}'. URL needs to be of proper format.",
+            f"Date and time must be of the form 'YYYY-MM-DD HH:MM:SS' in 24-hr time format, not '{event.date_and_time}'.",
+        )
+
+    # Validate optional parameters
+    if event.url is not None and isinstance(validators.url(event.url), ValidationError):
+        abort(
+            400,
+            f"User submitted invalid URL '{event.url}'. URL needs to be of proper format, e.g. 'https://www.google.com'.",
         )
 
     if event.phone:
@@ -605,13 +626,13 @@ def post_user_events():
         except NumberParseException:
             abort(
                 400,
-                f"If submitting a phone number, the user must submit a valid format. Given phone number {event.phone} is of incorrect format.",
+                f"If submitting a phone number, the user must submit a valid format. Given phone number {event.phone} is of incorrect format. Number must include country code.",
             )
         else:
             if not phonenumbers.is_valid_number(num):
                 abort(
                     400,
-                    f"If submitting a phone number, the user must submit a valid number. Given phone number {event.phone} is invalid.",
+                    f"If submitting a phone number, the user must submit a valid number. Given phone number {event.phone} is invalid. Number must include country code.",
                 )
 
     if event.email:
@@ -709,7 +730,7 @@ def update_event(event_id):
         )
 
     # Validate optional parameters
-    if event.url is not None and not validators.url(event.url):
+    if event.url is not None and isinstance(validators.url(event.url), ValidationError):
         abort(
             400,
             f"User submitted invalid URL '{event.url}'. URL needs to be of proper format.",

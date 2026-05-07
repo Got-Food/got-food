@@ -134,7 +134,7 @@ def rollback_after_test(app):
 @pytest.fixture()
 def populate_user_tables(client, mock_geocode):
     # Populate Pantries
-    client.post(
+    insert1 = client.post(
         "/api/community/pantries",
         data={
             "name": "Test Creation User Pantry 1",
@@ -145,9 +145,9 @@ def populate_user_tables(client, mock_geocode):
             "supported_diets": ["HALAL"],
             "has_variable_hours": False,
         },
-    )
+    ).json["id"]
 
-    client.post(
+    insert2 = client.post(
         "/api/community/pantries",
         data={
             "name": "Test Creation User Pantry 2",
@@ -155,12 +155,12 @@ def populate_user_tables(client, mock_geocode):
             "city": "Alexandria",
             "state": "VA",
             "zip": "22305",
-            "eligibility": ["ALL"],
+            "eligibility": ["ANY"],
             "has_variable_hours": True,
         },
-    )
+    ).json["id"]
 
-    client.post(
+    insert3 = client.post(
         "/api/community/pantries",
         data={
             "name": "Test Creation User Pantry 3",
@@ -172,75 +172,33 @@ def populate_user_tables(client, mock_geocode):
             "supported_diets": ["KOSHER"],
             "has_variable_hours": False,
         },
-    )
+    ).json["id"]
 
     # Populate the UserHours table
     client.post(
-        "/api/community/pantries/1",
+        f"/api/community/pantries/{insert1}",
         data={
-            "pantry_id": 1,
+            "pantry_id": insert1,
             "day_of_week": "MONDAY",
             "status": "CLOSED",
         },
     )
 
     client.post(
-        "/api/community/pantries/2",
+        f"/api/community/pantries/{insert2}",
         data={
-            "pantry_id": 2,
+            "pantry_id": insert2,
             "day_of_week": "WEDNESDAY",
             "status": "CLOSED",
         },
     )
 
     client.post(
-        "/api/community/pantries/3",
+        f"/api/community/pantries/{insert3}",
         data={
-            "pantry_id": 3,
+            "pantry_id": insert3,
             "day_of_week": "SATURDAY",
             "status": "CLOSED",
         },
     )
-
-    # Populate the UserEvents table
-    client.post(
-        "/api/community/events",
-        data={
-            "name": "Test Creation User Event 1",
-            "address": "3625 Potomac Ave",
-            "city": "Alexandria",
-            "state": "VA",
-            "zip": "22305",
-            "is_students_only": True,
-            "supported_diets": ["HALAL"],
-            "date_and_time": "2026-05-05 12:00:00",
-        },
-    )
-
-    client.post(
-        "/api/community/events",
-        data={
-            "name": "Test Creation User Event 2",
-            "address": "3625 Potomac Ave",
-            "city": "Alexandria",
-            "state": "VA",
-            "zip": "22305",
-            "is_students_only": True,
-            "supported_diets": ["KOSHER"],
-            "date_and_time": "2026-05-05 12:00:00",
-        },
-    )
-
-    client.post(
-        "/api/community/events",
-        data={
-            "name": "Test Creation User Event 3",
-            "address": "3625 Potomac Ave",
-            "city": "Alexandria",
-            "state": "VA",
-            "zip": "22305",
-            "is_students_only": False,
-            "supported_diets": ["HALAL"],
-            "date_and_time": "2026-05-05 12:00:00",
-        },
-    )
+    yield
