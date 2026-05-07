@@ -157,6 +157,7 @@ function Resources() {
                 value={form.name}
                 onChange={handleChange}
                 placeholder="e.g. Community Food Drive"
+                autoComplete="off"
                 style={inputStyle}
               />
             </Field>
@@ -168,6 +169,7 @@ function Resources() {
                 value={form.address}
                 onChange={handleChange}
                 placeholder="e.g. 123 Main St, Reston, VA 20190"
+                autoComplete="off"
                 style={inputStyle}
               />
             </Field>
@@ -222,6 +224,7 @@ function Resources() {
               onChange={handleChange}
               placeholder="Any extra details about this event..."
               rows={4}
+              autoComplete="off"
               style={{ ...inputStyle, resize: "vertical" }}
             />
           </Field>
